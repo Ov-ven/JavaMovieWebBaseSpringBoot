@@ -1,0 +1,134 @@
+/* 全局样式 */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Microsoft YaHei', sans-serif;
+}
+
+/* 轮播图样式 */
+.carousel-image {
+    height: 500px;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+}
+
+.carousel-caption {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 2rem;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 电影卡片样式 */
+.movie-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+    border: none;
+    border-radius: 10px;
+}
+
+.movie-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.movie-card .card-img-top {
+    height: 300px;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.movie-card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+.card-badges {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* 分类卡片样式 */
+.category-card {
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+}
+
+.category-card:hover {
+    transform: scale(1.05);
+}
+
+/* 评论区域 */
+.comment-item {
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    border-left: 3px solid #0d6efd;
+}
+
+/* 评分样式 */
+.rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.rating input {
+    display: none;
+}
+
+.rating label {
+    font-size: 1.5rem;
+    color: #ddd;
+    cursor: pointer;
+}
+
+.rating input:checked ~ label {
+    color: #ffc107;
+}
+
+.rating label:hover,
+.rating label:hover ~ label {
+    color: #ffc107;
+}
+
+/* 主创头像 */
+.person-avatar {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border: 2px solid #ddd;
+    transition: transform 0.3s;
+}
+
+.person-avatar:hover {
+    transform: scale(1.1);
+    border-color: #0d6efd;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .carousel-image {
+        height: 300px;
+    }
+
+    .carousel-caption {
+        padding: 1rem;
+    }
+
+    .carousel-caption h2 {
+        font-size: 1.2rem;
+    }
+}

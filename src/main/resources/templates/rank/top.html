@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>高分电影排行榜</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <style>
+        .movie-rank {
+            transition: all 0.3s ease;
+        }
+        .movie-rank:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .top-badge {
+            font-size: 1.2rem;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .rank-1 {
+            background-color: #FFD700; /* 金牌 */
+        }
+        .rank-2 {
+            background-color: #C0C0C0; /* 银牌 */
+        }
+        .rank-3 {
+            background-color: #CD7F32; /* 铜牌 */
+        }
+    </style>
+</head>
+<body>
+<!-- 头部导航 -->
+<div th:replace="fragments/header :: header"></div>
+
+<div class="container my-5">
+    <h1 class="mb-4"><i class="bi bi-star-fill text-warning"></i> 高分电影排行榜</h1>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <i class="bi bi-trophy"></i> TOP 3
+                </div>
+                <div class="list-group list-group-flush">
+                    <div th:each="movie, iter : ${topMovies}" th:if="${iter.index < 3}"
+                         class="list-group-item d-flex align-items-center movie-rank">
+                        <!-- 排名徽章 -->
+                        <span th:class="${'top-badge me-3 ' +
+                (iter.index == 0 ? 'rank-1' :
+                (iter.index == 1 ? 'rank-2' : 'rank-3'))}"
+                              th:text="${iter.index + 1}"></span>
+
+                        <div>
+                            <h6 class="mb-1">
+                                <a th:href="@{/detail/{id}(id=${movie.id})}"
+                                   th:text="${movie.title}"></a>
+                            </h6>
+                            <small class="text-muted">
+                                <span th:text="${movie.region}"></span> ·
+                                <span th:text="${movie.type}"></span>
+                            </small>
+                        </div>
+                        <div class="ms-auto">
+                            <span class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <span th:text="${movie.score}"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th style="width: 10%">排名</th>
+                            <th style="width: 30%">电影</th>
+                            <th style="width: 20%">类型/地区</th>
+                            <th style="width: 15%">评分</th>
+                            <th style="width: 15%">播放次数</th>
+                            <th style="width: 10%">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="movie, iter : ${topMovies}" th:if="${iter.index >= 3}"
+                            class="movie-rank">
+                            <td>
+                                <span class="badge bg-secondary" th:text="${iter.index + 1}"></span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <a th:href="@{/detail/{id}(id=${movie.id})}"
+                                       th:text="${movie.title}"></a>
+                                </div>
+                            </td>
+                            <td>
+                                <span th:text="${movie.type}"></span> ·
+                                <span th:text="${movie.region}"></span>
+                            </td>
+                            <td>
+                                <span class="text-warning">
+                                    <i class="bi bi-star-fill"></i>
+                                    <span th:text="${movie.score}"></span>
+                                </span>
+                            </td>
+                            <td>
+                                <i class="bi bi-eye-fill text-primary"></i>
+                                <span th:text="${#numbers.formatDecimal(movie.views, 0, 'COMMA', 0, 'POINT')}"></span>
+                            </td>
+                            <td>
+                                <a th:href="@{/detail/{id}(id=${movie.id})}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-play-fill"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 底部 -->
+<div th:replace="fragments/footer :: footer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

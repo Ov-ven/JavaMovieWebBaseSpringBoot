@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="fragments/header :: head('注册')">
+  <style>
+    /* 全局样式 */
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Microsoft YaHei', sans-serif;
+    }
+
+    /* 注册表单卡片样式 */
+    .card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+      border-bottom: none;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* 表单输入框样式 */
+    .form-control {
+      border-radius: 5px;
+    }
+
+    /* 按钮样式 */
+    .btn {
+      border-radius: 5px;
+    }
+
+    /* 错误提示信息样式 */
+    .alert {
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+<!-- 头部导航 -->
+<header th:fragment="simpleHeader">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" th:href="@{/}">
+        <img th:src="@{/image/logo/logo.png}" alt="懋懋电影网站" height="40">
+      </a>
+      <span class="navbar-text ms-auto text-white">懋懋电影网站</span>
+    </div>
+  </nav>
+</header>
+
+<!-- 注册表单 -->
+<section class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">用户注册</h4>
+        </div>
+        <div class="card-body">
+          <form id="registerForm">
+            <div id="registerError" class="alert alert-danger d-none"></div>
+
+            <div class="mb-3">
+              <label for="regUsername" class="form-label">用户名</label>
+              <input type="text" class="form-control" id="regUsername" name="username" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="regPassword" class="form-label">密码</label>
+              <input type="password" class="form-control" id="regPassword" name="password" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="regEmail" class="form-label">邮箱</label>
+              <input type="email" class="form-control" id="regEmail" name="email" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="regPhone" class="form-label">手机号</label>
+              <input type="tel" class="form-control" id="regPhone" name="phone" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">注册</button>
+
+            <div class="text-center mt-3">
+              <p>已有账号? <a th:href="@{/login}">立即登录</a></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 底部 -->
+<div th:replace="fragments/footer :: footer"></div>
+
+<!-- 脚本 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.getElementById('registerForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const username = document.getElementById('regUsername').value;
+    const password = document.getElementById('regPassword').value;
+    const email = document.getElementById('regEmail').value;
+    const phone = document.getElementById('regPhone').value;
+
+    fetch('/api/user/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password,
+        email: email,
+        phone: phone
+      })
+    })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                window.location.href = '/login';
+              } else {
+                const errorDiv = document.getElementById('registerError');
+                errorDiv.textContent = data.message;
+                errorDiv.classList.remove('d-none');
+              }
+            });
+  });
+</script>
+</body>
+</html>

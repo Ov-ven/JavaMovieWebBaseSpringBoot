@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.software.movie.mapper.CommentMapper">
+    <resultMap id="BaseResultMap" type="com.software.movie.entity.Comment">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="movie_id" property="movieId" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="score" property="score" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    <select id="selectPageByMovieId" resultType="com.software.movie.entity.Comment">
+        SELECT
+            c.*,
+            u.username AS username, -- 对应 Comment 实体中的非数据库字段
+            u.avatar AS avatar    -- 对应 Comment 实体中的非数据库字段
+        FROM
+            comment c
+                LEFT JOIN
+            user u ON c.user_id = u.id
+        WHERE
+            c.movie_id = #{movieId}
+        ORDER BY
+            c.create_time DESC
+    </select>
+
+    <select id="selectByUserAndMovie" resultType="com.software.movie.entity.Comment">
+        SELECT * FROM comment WHERE user_id = #{userId} AND movie_id = #{movieId}
+    </select>
+
+    <select id="calculateAverageScore" resultType="java.lang.Double">
+        SELECT AVG(score) FROM comment WHERE movie_id = #{movieId}
+    </select>
+
+    <select id="selectCommentsByMovieId" resultMap="BaseResultMap">
+        SELECT *
+        FROM comment
+        WHERE movie_id = #{movieId}
+    </select>
+</mapper>

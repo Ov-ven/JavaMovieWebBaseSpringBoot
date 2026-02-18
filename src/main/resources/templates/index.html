@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments/header :: head('首页')}">
+</head>
+<body>
+<!-- 头部导航 -->
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert" style="margin: 20px;">
+	<p th:text="${success}" class="mb-0"></p>
+	<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<link rel="stylesheet" th:href="@{/css/index.css}">
+<div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert" style="margin: 20px;">
+	<p th:text="${error}" class="mb-0"></p>
+	<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+<!-- 轮播图 - 热播电影 -->
+<section class="mb-5">
+	<div id="hotCarousel" class="carousel slide" data-bs-ride="carousel">
+		<div class="carousel-inner">
+			<div th:each="movie, iter : ${hotMovies}"
+				 th:class="${iter.index == 0} ? 'carousel-item active' : 'carousel-item'">
+				<div class="carousel-image"
+					 th:style="'background-image: url(\'/image/' + ${movie.cover} + '\');'">
+					<div class="carousel-caption d-none d-md-block">
+						<h2 th:text="${movie.title}">电影标题</h2>
+						<p th:text="${movie.description}">电影描述</p>
+						<a th:href="@{/detail/{id}(id=${movie.id})}" class="btn btn-primary">查看详情</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- 轮播控件 -->
+		<button class="carousel-control-prev" type="button" data-bs-target="#hotCarousel" data-bs-slide="prev">
+			<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+			<span class="visually-hidden">Previous</span>
+		</button>
+		<button class="carousel-control-next" type="button" data-bs-target="#hotCarousel" data-bs-slide="next">
+			<span class="carousel-control-next-icon" aria-hidden="true"></span>
+			<span class="visually-hidden">Next</span>
+		</button>
+	</div>
+</section>
+
+<!-- 排行榜 -->
+<section class="container mb-5">
+	<h3 class="mb-4">电影排行榜</h3>
+	<div class="row">
+		<div class="col-md-4">
+			<div class="card">
+				<div class="card-header bg-primary text-white">
+					<i class="bi bi-trophy me-2"></i>本周热播
+				</div>
+				<ul class="list-group list-group-flush">
+					<li th:each="movie, iter : ${weeklyTop}" class="list-group-item d-flex">
+						<span class="badge bg-primary me-2" th:text="${iter.index+1}"></span>
+						<a th:href="@{/detail/{id}(id=${movie.id})}" th:text="${movie.title}"></a>
+						<span class="ms-auto text-danger" th:text="${movie.views} + '播放'"></span>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="card">
+				<div class="card-header bg-success text-white">
+					<i class="bi bi-star me-2"></i>好评排行
+				</div>
+				<ul class="list-group list-group-flush">
+					<li th:each="movie, iter : ${topScoreMovies}" class="list-group-item d-flex">
+						<span class="badge bg-success me-2" th:text="${iter.index+1}"></span>
+						<a th:href="@{/detail/{id}(id=${movie.id})}" th:text="${movie.title}"></a>
+						<span class="ms-auto text-success" th:text="${movie.score} + '分'"></span>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="card">
+				<div class="card-header bg-warning text-dark">
+					<i class="bi bi-film me-2"></i>新片推荐
+				</div>
+				<ul class="list-group list-group-flush">
+					<li th:each="movie, iter : ${newMovies}" class="list-group-item d-flex">
+						<span class="badge bg-warning me-2" th:text="${iter.index+1}"></span>
+						<a th:href="@{/detail/{id}(id=${movie.id})}" th:text="${movie.title}"></a>
+						<span class="ms-auto text-muted" th:text="${#dates.format(movie.releaseDate, 'yyyy-MM-dd')}"></span>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- 电影列表 -->
+<section class="container mb-5">
+	<div class="d-flex justify-content-between align-items-center mb-4">
+		<h3>电影列表</h3>
+		<div>
+			<a th:href="@{/(sort='new')}"
+			   th:classappend="${querySort == 'new'} ? 'btn-primary' : 'btn-outline-secondary'"
+			   class="btn me-2">最新</a>
+			<a th:href="@{/(sort='hot')}"
+			   th:classappend="${querySort == 'hot'} ? 'btn-primary' : 'btn-outline-secondary'"
+			   class="btn me-2">最热</a>
+			<a th:href="@{/(sort='top')}"
+			   th:classappend="${querySort == 'top'} ? 'btn-primary' : 'btn-outline-secondary'"
+			   class="btn">评分最高</a>
+		</div>
+	</div>
+
+	<div class="row">
+		<div th:each="movie : ${moviePage.records}" class="col-md-3 mb-4">
+			<a th:href="@{/detail/{id}(id=${movie.id})}" class="text-decoration-none text-dark d-block">
+				<div class="movie-card card h-100">
+					<div class="movie-score" th:if="${movie.score != null}" th:text="${#numbers.formatDecimal(movie.score, 1, 1)}">
+					</div>
+
+					<img class="card-img-top" th:src="@{'/image/'+${movie.cover}}" alt="电影封面">
+					<div class="card-body d-flex flex-column">
+						<h5 class="card-title" th:text="${movie.title}">电影标题</h5>
+						<p class="card-text flex-grow-1" th:text="${movie.description}">电影描述</p>
+					</div>
+				</div>
+			</a>
+		</div>
+	</div>
+	<!-- 分页控件 -->
+	<nav th:if="${moviePage.pages > 1}">
+		<ul class="pagination justify-content-center">
+			<li class="page-item" th:classappend="${currentPage == 1} ? 'disabled' : ''">
+				<a class="page-link"
+				   th:href="@{/(page=1, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
+					首页
+				</a>
+			</li>
+			<li class="page-item" th:classappend="${currentPage == 1} ? 'disabled' : ''">
+				<a class="page-link"
+				   th:href="@{/(page=${prevPage}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
+					上一页
+				</a>
+			</li>
+
+			<!-- 页码列表 -->
+			<li th:each="pageNum : ${#numbers.sequence(1, moviePage.pages)}"
+				th:classappend="${pageNum == currentPage} ? 'active' : ''" class="page-item">
+				<a class="page-link"
+				   th:href="@{/(page=${pageNum}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}"
+				   th:text="${pageNum}"></a>
+			</li>
+
+			<li class="page-item" th:classappend="${currentPage == moviePage.pages} ? 'disabled' : ''">
+				<a class="page-link"
+				   th:href="@{/(page=${nextPage}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
+					下一页
+				</a>
+			</li>
+			<li class="page-item" th:classappend="${currentPage == moviePage.pages} ? 'disabled' : ''">
+				<a class="page-link"
+				   th:href="@{/(page=${moviePage.pages}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
+					尾页
+				</a>
+			</li>
+		</ul>
+	</nav>
+</section>
+<!-- 底部 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- 脚本 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

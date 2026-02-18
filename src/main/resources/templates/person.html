@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="fragments/header :: head(${person.name} + '的作品')">
+    <style>
+        /* 主创链接效果 - 去除下划线 */
+        .person-info-container {
+            display: block;
+            text-decoration: none;
+            color: #333;
+        }
+
+        /* 主创名字和角色样式 - 去除下划线和悬停效果 */
+        .person-name, .person-role {
+            text-decoration: none !important;
+            color: inherit;
+            transition: none !important;
+        }
+
+        /* 电影卡片样式 */
+        .movie-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .movie-card img {
+            height: 250px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+<!-- 头部导航 -->
+<div th:replace="fragments/header :: header"></div>
+
+<!-- 面包屑导航 -->
+<nav aria-label="breadcrumb" class="bg-light py-3">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a th:href="@{/}">首页</a></li>
+            <!-- 如果有来源电影 -->
+            <li class="breadcrumb-item" th:if="${refererMovie}">
+                <a th:href="@{'/detail/' + ${refererMovie.id}}" th:text="${refererMovie.title}"></a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <span th:text="${person.name}"></span> 的作品
+            </li>
+        </ol>
+    </div>
+</nav>
+
+<!-- 主创信息 -->
+<section class="container my-5">
+    <div class="row">
+        <div class="col-lg-3 mb-4 text-center">
+            <!-- 修改：去除链接，直接显示静态信息 -->
+            <div class="person-info-container">
+                <!-- <img th:src="${person.photo}" class="person-avatar" alt="主创头像"> -->
+                <h3 class="mt-3 person-name" th:text="${person.name}"></h3>
+                <p class="text-muted person-role" th:text="${person.type == 0} ? '演员' : '导演'"></p>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <!-- 简介部分 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">
+                        <i class="bi bi-person-lines-fill me-2"></i>简介
+                    </h4>
+                    <div class="px-3">
+                        <p class="card-text" th:utext="${person.description ?: '暂无简介'}"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 作品列表 -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="card-title mb-0">
+                            <i class="bi bi-film me-2"></i>参与作品
+                            <span class="fs-5 text-muted" th:text="'(' + ${movies.size()} + '部)'"></span>
+                        </h4>
+
+                        <!-- 缓存标识 -->
+                        <span th:if="${cached}" class="badge bg-info">
+                            <i class="bi bi-lightning-charge"></i> 快速加载
+                        </span>
+                    </div>
+
+                    <!-- 电影列表 -->
+                    <div th:if="${!movies.isEmpty()}" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+                        <div th:each="movie : ${movies}" class="col">
+                            <div class="card h-100 movie-card">
+                                <a th:href="@{'/detail/'+${movie.id}}">
+                                    <img th:src="@{'/image/'+${movie.cover}}" class="card-img-top" alt="电影封面">
+                                </a>
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <a th:href="@{'/detail/'+${movie.id}}" th:text="${movie.title}"
+                                           class="text-decoration-none text-dark"></a>
+                                    </h5>
+                                    <div class="d-flex justify-content-between small text-muted mb-2">
+                                        <span th:text="${movie.region}"></span>
+                                        <span class="text-warning">
+                                            <i class="bi bi-star-fill"></i>
+                                            <span th:text="${movie.score}"></span>
+                                        </span>
+                                    </div>
+                                    <div class="d-grid mt-2">
+                                        <a th:href="@{'/detail/'+${movie.id}}" class="btn btn-sm btn-outline-primary">
+                                            查看详情
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 无作品提示 -->
+                    <div th:if="${movies.isEmpty()}" class="text-center py-5">
+                        <div class="py-5">
+                            <i class="bi bi-film display-1 text-muted opacity-25"></i>
+                            <h4 class="my-3 text-muted">暂无作品</h4>
+                            <p class="text-muted">此主创暂无关联的电影作品</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 底部 -->
+<div th:replace="fragments/footer :: footer"></div>
+
+<!-- 脚本 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

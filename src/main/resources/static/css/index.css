@@ -1,0 +1,41 @@
+@charset "utf-8";
+.movie-card {
+    position: relative; /* 使父元素定位，以便子元素可以绝对定位 */
+    overflow: hidden;   /* 确保分数不会溢出卡片边缘 */
+}
+
+.movie-score {
+    position: absolute; /* **将分数绝对定位到卡片内部** */
+    top: 10px;          /* 距离顶部 10 像素 */
+    left: 10px;         /* 距离左侧 10 像素 */
+    background-color: rgba(0, 0, 0, 0.7); /* 半透明黑色背景 */
+    color: white;       /* 文字颜色为白色 */
+    padding: 5px 8px;   /* 内边距，让背景框更大一些 */
+    border-radius: 5px; /* 圆角边框 */
+    font-weight: bold;  /* 字体加粗 */
+    font-size: 1.1em;   /* 字体大小略大 */
+    z-index: 10;        /* 确保分数在图片和其他内容之上 */
+}
+
+/* 可以根据需要调整，确保在小屏幕下也好看 */
+@media (max-width: 768px) {
+    .movie-score {
+        top: 5px;
+        left: 5px;
+        padding: 3px 6px;
+        font-size: 1em;
+    }
+}
+#add-panel{
+    display: none;
+    box-sizing: border-box;
+    width: 400px;
+    height: 180px;
+    position: absolute;
+    top: 100px;
+    left: 200px;
+    background-color: #fff;
+    border: 1px solid #c00;
+    box-shadow: 0px 0px 10px #ccc;
+    z-index: 999;
+}

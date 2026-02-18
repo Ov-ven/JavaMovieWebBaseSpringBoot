@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人中心</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --vip-color: #ff9800;
+      --danger-color: #e74c3c;
+      --background-light: #f8f9fa;
+      --text-dark: #343a40;
+      --card-bg: #ffffff;
+      --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --border-light: #e0e0e0;
+    }
+
+    body {
+      background-color: var(--background-light);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+
+    .profile-container {
+      max-width: 700px; /* 进一步缩小最大宽度，适应更少内容 */
+      margin: 80px auto; /* 增加顶部和底部外边距，使页面更居中 */
+      padding: 40px; /* 增加内边距 */
+      box-shadow: var(--card-shadow);
+      border-radius: 15px;
+      background-color: var(--card-bg);
+      text-align: center; /* 使内部元素居中 */
+    }
+
+    /* 头部用户信息区域 */
+    .user-header {
+      background: linear-gradient(135deg, var(--primary-color), #2980b9);
+      color: white;
+      border-radius: 10px;
+      padding: 40px 30px;
+      margin-bottom: 40px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column; /* 垂直排列内容 */
+      align-items: center; /* 水平居中对齐 */
+    }
+
+    .user-avatar {
+      width: 120px; /* 略微增大头像 */
+      height: 120px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.4);
+      object-fit: cover;
+      margin-bottom: 20px; /* 增加底部间距 */
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .user-avatar:hover {
+      transform: scale(1.08) rotate(3deg);
+    }
+
+    .user-details h4 {
+      font-weight: 600;
+      margin-bottom: 8px; /* 增加底部间距 */
+      font-size: 1.8em; /* 增大用户名 */
+    }
+
+    .profile-summary {
+      font-size: 1.1em;
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 25px; /* 增加底部间距 */
+    }
+    .profile-summary h3 {
+      font-weight: 700;
+      margin-bottom: 5px;
+      font-size: 1.6em; /* 增大欢迎语 */
+    }
+    .profile-summary p {
+      font-size: 1em; /* 调整描述文字大小 */
+      opacity: 0.9; /* 稍微提高透明度 */
+    }
+
+    .vip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px; /* 调整内边距，使其更大 */
+      border-radius: 25px;
+      font-weight: bold;
+      font-size: 1em; /* 调整字体大小 */
+      background-color: var(--vip-color);
+      box-shadow: 0 3px 12px rgba(255, 152, 0, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .vip-badge.not-vip {
+      background-color: #bdbdbd;
+      box-shadow: none;
+      color: #555;
+    }
+
+    .upgrade-section {
+      margin-top: 30px; /* 增加与 VIP 徽章的间距 */
+    }
+
+    .upgrade-btn {
+      background-color: var(--vip-color);
+      border: none;
+      color: white;
+      padding: 15px 40px; /* 进一步增大按钮 */
+      border-radius: 30px;
+      font-weight: bold;
+      font-size: 1.1em; /* 增大按钮文字 */
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 5px 18px rgba(255, 152, 0, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px; /* 增大图标和文字间距 */
+    }
+
+    .upgrade-btn:hover {
+      background-color: #ffb336;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255, 152, 0, 0.5);
+    }
+
+    .upgrade-btn.not-vip {
+      background-color: #e0e0e0;
+      color: #616161;
+      box-shadow: none;
+    }
+
+    .upgrade-btn.not-vip:hover {
+      background-color: #d5d5d5;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+      .profile-container {
+        margin: 30px auto;
+        padding: 25px;
+        max-width: 95%; /* 小屏幕下可以更宽一些 */
+      }
+      .user-header {
+        padding: 25px;
+      }
+      .user-avatar {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 15px;
+      }
+      .user-details h4 {
+        font-size: 1.5em;
+      }
+      .vip-badge {
+        padding: 6px 14px;
+        font-size: 0.9em;
+      }
+      .upgrade-btn {
+        padding: 12px 30px;
+        font-size: 1em;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="profile-container">
+  <div class="user-header">
+    <img th:src="@{'/image/user/' + ${session.user.avatar}}" onerror="this.onerror=null;this.src='/image/default_avatar.png';" alt="用户头像" class="user-avatar">
+
+    <div class="user-details">
+      <h4 th:text="${session.user.username}">用户名</h4>
+      <span class="vip-badge" th:classappend="${session.user.getIsvip()} ? '': 'not-vip'">
+          <i th:class="${session.user.getIsvip()} ? 'bi bi-award-fill' : 'bi bi-person-fill'"></i>
+          <span th:text="${session.user.getIsvip()} ? 'VIP会员' : '普通用户'">普通用户</span>
+      </span>
+    </div>
+
+    <div class="profile-summary">
+      <h3>欢迎回来，<span th:text="${session.user.username}"></span>！</h3>
+      <p th:text="${session.user.getIsvip()} ? '尊贵的VIP会员，享受无限制观影体验！' : '成为VIP，解锁更多精彩电影！'"></p>
+    </div>
+
+    <div class="upgrade-section">
+      <!-- 动态切换跳转链接和样式类 -->
+      <a th:href="${session.user.isvip==1 ? '/vip/manage' : '/vip/upgrade'}"
+         class="upgrade-btn"
+         th:classappend="${session.user.getIsvip()} ? 'vip-manage-btn' : 'not-vip'">
+        <i th:class="${session.user.getIsvip()} ? 'bi bi-gear-fill' : 'bi bi-gem'"></i>
+        <span th:text="${session.user.getIsvip()} ? '管理VIP' : '升级VIP'"></span>
+      </a>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.querySelector('.upgrade-btn')?.addEventListener('click', function(e) {
+    // 仅对"升级VIP"按钮显示确认弹窗
+    if (this.textContent.includes('升级VIP') && !confirm('确定要升级VIP吗？')) {
+      e.preventDefault();
+    }
+    // "管理VIP"按钮直接跳转，无需确认
+  });
+</script>
+</body>
+</html>

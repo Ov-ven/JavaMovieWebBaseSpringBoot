@@ -1,0 +1,49 @@
+.rating {
+    display: inline-block;
+    unicode-bidi: bidi-override;
+    direction: rtl;
+    /* 可以尝试在这里添加 vertical-align */
+    vertical-align: middle; /* 或者 top, bottom，看哪个效果最好 */
+}
+
+.rating > input {
+    display: none;
+}
+
+.rating > label {
+    display: inline-block;
+    position: relative;
+    width: 1.1em; /* 保持宽度 */
+    cursor: pointer;
+    color: #ccc;
+    font-size: 2em; /* 保持字体大小 */
+    /* 重点调整：消除或调整行高，让星星更贴合 */
+    line-height: 1; /* 通常设置为1可以消除额外空间 */
+    vertical-align: middle; /* 尝试让标签内容垂直居中 */
+}
+
+/* 星星图标样式 */
+.rating > label::before {
+    content: "\2605";
+    position: absolute;
+    /* 重点调整：负值 margin-top 或 top 来向上微调 */
+    top: 50%; /* 定位到顶部50% */
+    transform: translateY(-50%); /* 向上移动自身高度的50%以垂直居中 */
+    padding: 0.1em; /* 保持填充，或者根据需要调整 */
+}
+
+/* 其他悬停/选中效果保持不变 */
+.rating > label:hover,
+.rating > label:hover ~ label {
+    color: orange;
+}
+
+.rating > input:checked ~ label {
+    color: gold;
+}
+
+.rating > input:checked + label:hover,
+.rating > input:checked + label:hover ~ label,
+.rating > label:hover ~ input:checked ~ label {
+    color: gold;
+}

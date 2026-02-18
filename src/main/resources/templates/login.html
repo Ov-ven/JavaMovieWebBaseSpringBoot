@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="fragments/header :: head('登录')">
+  <style>
+    /* 全局样式 */
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Microsoft YaHei', sans-serif;
+    }
+
+    /* 登录表单卡片样式 */
+    .card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+      border-bottom: none;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* 表单输入框样式 */
+    .form-control {
+      border-radius: 5px;
+    }
+
+    /* 按钮样式 */
+    .btn {
+      border-radius: 5px;
+    }
+
+    /* 错误提示信息样式 */
+    .alert {
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+<!-- 头部导航 -->
+<header th:fragment="simpleHeader">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" th:href="@{/}">
+        <img th:src="@{/image/logo/logo.png}" alt="懋懋电影网站" height="40">
+      </a>
+      <span class="navbar-text ms-auto text-white">懋懋电影网站</span>
+    </div>
+  </nav>
+</header>
+<!-- 登录表单 -->
+<section class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">用户登录</h4>
+        </div>
+        <div class="card-body">
+          <form id="loginForm">
+            <div id="loginError" class="alert alert-danger d-none"></div>
+
+            <div class="mb-3">
+              <label for="username" class="form-label">用户名</label>
+              <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">密码</label>
+              <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="remember" name="remember">
+              <label class="form-check-label" for="remember">记住我</label>
+              <a th:href="@{/forgot}" class="float-end">忘记密码?</a>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">登录</button>
+
+            <div class="text-center mt-3">
+              <p>还没有账号? <a th:href="@{/register}">立即注册</a></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 底部 -->
+<div th:replace="fragments/footer :: footer"></div>
+
+<!-- 脚本 -->
+<script>
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const loginData = {
+      username: document.getElementById('username').value,
+      password: document.getElementById('password').value
+    };
+
+    fetch('/api/user/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(loginData)
+    })
+            .then(response => response.json())
+            .then(data => {
+              const errorDiv = document.getElementById('loginError');
+
+              if (data.success) {
+                // 登录成功，隐藏错误信息并跳转
+                errorDiv.style.display = 'none';
+                window.location.href = '/';
+              } else {
+                // 登录失败，显示错误信息
+                errorDiv.textContent = data.message; // 显示后端返回的错误信息
+                errorDiv.style.display = 'block';
+              }
+            })
+            .catch(error => {
+              console.error('登录请求失败:', error);
+              document.getElementById('loginError').textContent = '登录请求失败，请重试';
+              document.getElementById('loginError').style.display = 'block';
+            });
+  });
+</script>
+</body>
+</html>
