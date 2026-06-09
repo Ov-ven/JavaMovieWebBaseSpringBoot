@@ -6,108 +6,246 @@
 <!-- 头部导航 -->
 <div th:replace="fragments/header :: header"></div>
 <link rel="stylesheet" th:href="@{/css/rating.css}">
+
 <!-- 电影详情 -->
-<section class="container my-5">
-  <div class="row">
-    <div class="col-md-4 mb-4">
-      <img th:src="@{'/image/'+${movie.cover}}" class="card-img-top" alt="电影封面">
-      <div class="mt-3 d-grid gap-2">
-        <button th:if="${canWatch}" class="btn btn-primary btn-lg mt-2" th:href="@{/play/{id}(id=${movie.id})}">
-          <i class="bi bi-play-fill"></i> 立即播放
-        </button>
-        <div th:unless="${canWatch}" class="alert alert-warning mt-3">
-          <p>此影片为VIP专享，请升级VIP后观看</p>
-          <a th:href="@{/vip}" class="btn btn-warning">升级VIP</a>
+<section class="section">
+  <div class="container">
+    <div class="row g-5">
+      <!-- 封面区域 -->
+      <div class="col-md-4 mb-4">
+        <div class="movie-card">
+          <div class="movie-cover-wrap">
+            <img th:src="@{'/image/'+${movie.cover}}" class="movie-cover" alt="电影封面">
+            <span th:if="${movie.isVip == 1}" class="movie-badge badge-vip">VIP</span>
+            <span th:if="${movie.price != null and movie.price > 0}" class="movie-badge badge-price" th:text="'¥' + ${#numbers.formatDecimal(movie.price, 1, 2)}"></span>
+            <span th:if="${movie.score != null}" class="movie-score">
+              <i class="bi bi-star-fill"></i>
+              <span th:text="${movie.score}"></span>
+            </span>
+          </div>
         </div>
-      </div>
-    </div>
-    <div class="col-md-8">
-      <h1 th:text="${movie.title}"></h1>
-      <div class="d-flex align-items-center mb-3">
-        <span class="badge bg-primary me-2" th:text="${movie.type}"></span>
-        <span class="badge bg-secondary me-2" th:text="${movie.region}"></span>
-        <span class="me-2" th:text="${#dates.format(movie.releaseDate, 'yyyy-MM-dd')}"></span>
-        <span th:text="${movie.duration} + '分钟'"></span>
-        <span class="ms-auto">
-                        <i class="bi bi-star-fill text-warning"></i>
-                        <span th:text="${movie.score}"></span>
-                    </span>
-      </div>
 
-      <div class="mb-4">
-        <h4>剧情简介</h4>
-        <p th:text="${movie.description}"></p>
-      </div>
-
-      <div class="mb-4">
-        <h4>主创人员</h4>
-        <div class="d-flex flex-wrap">
-          <div th:each="person : ${creators}" class="me-4 mb-3 text-center">
-            <a th:href="@{'/person/'+ ${person.id}}">
-              <div class="mt-1" th:text="${person.name}"></div>
-              <small class="text-muted" th:text="${person.type == 0} ? '演员' : '导演'"></small>
+        <div class="mt-3 d-grid gap-2">
+          <a th:if="${canWatch}" class="btn-primary" th:href="@{/play/{id}(id=${movie.id})}" style="justify-content:center;">
+            <i class="bi bi-play-fill"></i> 立即播放
+          </a>
+          <div th:unless="${canWatch}" style="background:var(--accent-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-top:12px;">
+            <p style="color:var(--text-primary);font-weight:500;margin-bottom:12px;">此影片为VIP专享</p>
+            <!-- 有待支付订单 → 继续支付 -->
+            <a th:if="${pendingOrderNo != null}"
+               th:href="@{/pay(orderNo=${pendingOrderNo})}"
+               class="btn-primary" style="justify-content:center;width:100%;margin-bottom:8px;">
+              <i class="bi bi-clock-history"></i> 继续支付（30分钟内有效）
             </a>
+            <!-- 无待支付订单 → 购买此片 -->
+            <a th:if="${pendingOrderNo == null and movie.price != null and movie.price > 0}"
+               class="btn-primary" style="justify-content:center;width:100%;margin-bottom:8px;"
+               th:attr="data-movie-id=${movie.id}, data-price=${movie.price}"
+               onclick="buyMovie(this)" href="javascript:void(0)">
+              <i class="bi bi-cart"></i> 购买此片 ¥<span th:text="${#numbers.formatDecimal(movie.price, 1, 2)}"></span>
+            </a>
+            <div style="margin-top:8px;">
+              <a th:href="@{/vip/upgrade}" class="btn-ghost" style="justify-content:center;width:100%;font-size:13px;">或升级VIP免费观看</a>
+            </div>
           </div>
+        </div>
+        <!-- 收藏按钮 -->
+        <div class="mt-3" th:if="${session.user != null}">
+          <button class="btn-ghost" id="favBtn" style="width:100%;justify-content:center;" th:attr="data-movie-id=${movie.id}" onclick="toggleFavorite(this)">
+            <i class="bi bi-heart" id="favIcon"></i> <span id="favText">收藏</span>
+          </button>
         </div>
       </div>
-    </div>
-  </div>
 
-  <div class="card-body">
-    <div th:if="${session.user}" class="mb-4">
-      <form th:action="@{/comment/add}" method="post">
-        <input type="hidden" name="movieId" th:value="${movie.id}">
-        <div class="mb-3">
-          <label class="form-label">评分</label>
-          <div class="rating">
-            <input type="radio" id="star5" name="score" value="5"><label for="star5"></label>
-            <input type="radio" id="star4" name="score" value="4"><label for="star4"></label>
-            <input type="radio" id="star3" name="score" value="3"><label for="star3"></label>
-            <input type="radio" id="star2" name="score" value="2"><label for="star2"></label>
-            <input type="radio" id="star1" name="score" value="1"><label for="star1"></label>
-          </div>
-        </div>
-        <div class="mb-3">
-          <textarea class="form-control" name="content" rows="3" placeholder="写下你的评论..."></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">提交评论</button>
-      </form>
-    </div>
-    <div th:unless="${session.user}" class="alert alert-info">
-      请<a th:href="@{/login}">登录</a>后发表评论
-    </div>
-    <hr>
-    <div th:if="${comments != null and !comments.isEmpty()}">
-      <h5 class="mb-3">所有评论:</h5>
-      <div th:each="commentMap : ${comments}" class="comment-item mb-3 p-3 border rounded">
-        <div th:if="${commentMap != null}">
-          <div class="d-flex align-items-center mb-2">
-            <strong th:text="${commentMap.userName != null ? commentMap.userName : '匿名用户'}"></strong>
-
-            <span class="ms-auto badge bg-warning text-dark">评分:
-            <span th:text="${commentMap.score != null ? #numbers.formatDecimal(commentMap.score, 0, 'COMMA', 1, 'POINT') : '暂无'}"></span>
+      <!-- 电影信息区域 -->
+      <div class="col-md-8">
+        <h1 th:text="${movie.title}" style="font-family:var(--font-display);font-size:2rem;font-weight:700;margin-bottom:16px;"></h1>
+        <div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+          <span class="pill active" th:text="${movie.type}"></span>
+          <span class="pill" th:text="${movie.region}"></span>
+          <span style="color:var(--text-muted);font-size:13px;" th:text="${#dates.format(movie.releaseDate, 'yyyy-MM-dd')}"></span>
+          <span style="color:var(--text-muted);font-size:13px;" th:text="${movie.duration} + '分钟'"></span>
+          <span style="margin-left:auto;">
+            <i class="bi bi-star-fill" style="color:#fbbf24;"></i>
+            <span style="font-weight:600;" th:text="${movie.score}"></span>
           </span>
-          </div>
-          <p th:text="${commentMap.content != null ? commentMap.content : '无评论内容'}" class="mb-1"></p>
-          <small class="text-muted" th:text="${commentMap.createTime != null ? #dates.format(commentMap.createTime, 'yyyy-MM-dd HH:mm') : '未知时间'}"></small>
         </div>
-        <div th:unless="${commentMap != null}">
-          <p class="text-danger">加载评论失败。</p>
+
+        <div class="mb-4">
+          <h4 style="font-family:var(--font-display);font-weight:600;margin-bottom:8px;">剧情简介</h4>
+          <p style="color:var(--text-secondary);line-height:1.8;" th:text="${movie.description}"></p>
+        </div>
+
+        <div class="mb-4">
+          <h4 style="font-family:var(--font-display);font-weight:600;margin-bottom:12px;">主创人员</h4>
+          <div class="d-flex flex-wrap gap-3">
+            <div th:each="person : ${creators}" class="text-center">
+              <a th:href="@{'/person/'+ ${person.id}}" style="text-decoration:none;color:var(--text-primary);">
+                <div style="font-weight:500;" th:text="${person.name}"></div>
+                <small style="color:var(--text-muted);" th:text="${person.type == 0} ? '演员' : '导演'"></small>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div th:unless="${comments != null and !comments.isEmpty()}" class="alert alert-info text-center">
-      暂无评论，快来抢沙发吧！
+
+    <!-- 评论区域 -->
+    <div class="card-ed" style="padding:32px;margin-top:40px;">
+      <div th:if="${session.user}" class="mb-4">
+        <form th:action="@{/comment/add}" method="post">
+          <input type="hidden" name="movieId" th:value="${movie.id}">
+          <div class="form-group">
+            <label class="form-label">评分</label>
+            <div class="rating">
+              <input type="radio" id="star5" name="score" value="5"><label for="star5"></label>
+              <input type="radio" id="star4" name="score" value="4"><label for="star4"></label>
+              <input type="radio" id="star3" name="score" value="3"><label for="star3"></label>
+              <input type="radio" id="star2" name="score" value="2"><label for="star2"></label>
+              <input type="radio" id="star1" name="score" value="1"><label for="star1"></label>
+            </div>
+          </div>
+          <div class="form-group">
+            <textarea class="form-input" name="content" rows="3" placeholder="写下你的评论..." style="resize:vertical;"></textarea>
+          </div>
+          <button type="submit" class="btn-primary">提交评论</button>
+        </form>
+      </div>
+      <div th:unless="${session.user}" style="background:var(--accent-light);border-radius:var(--radius-sm);padding:16px;margin-bottom:24px;">
+        请<a th:href="@{/login}" style="color:var(--accent);font-weight:600;">登录</a>后发表评论
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:24px 0;">
+      <div th:if="${comments != null and !comments.isEmpty()}">
+        <h5 style="font-family:var(--font-display);font-weight:600;margin-bottom:16px;">所有评论:</h5>
+        <div th:each="commentMap : ${comments}" style="padding:16px;margin-bottom:12px;border:1px solid var(--border-subtle);border-radius:var(--radius-sm);">
+          <div th:if="${commentMap != null}">
+            <div class="d-flex align-items-center mb-2">
+              <strong style="color:var(--text-primary);" th:text="${commentMap.userName != null ? commentMap.userName : '匿名用户'}"></strong>
+              <span style="margin-left:auto;background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:var(--radius-full);font-size:12px;font-weight:600;">评分:
+                <span th:text="${commentMap.score != null ? #numbers.formatDecimal(commentMap.score, 0, 'COMMA', 1, 'POINT') : '暂无'}"></span>
+              </span>
+            </div>
+            <p th:text="${commentMap.content != null ? commentMap.content : '无评论内容'}" style="color:var(--text-secondary);margin-bottom:4px;"></p>
+            <small style="color:var(--text-muted);" th:text="${commentMap.createTime != null ? #dates.format(commentMap.createTime, 'yyyy-MM-dd HH:mm') : '未知时间'}"></small>
+          </div>
+          <div th:unless="${commentMap != null}">
+            <p style="color:var(--accent);">加载评论失败。</p>
+          </div>
+        </div>
+      </div>
+      <div th:unless="${comments != null and !comments.isEmpty()}" style="text-align:center;padding:40px 0;color:var(--text-muted);">
+        <i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+        暂无评论，快来抢沙发吧！
+      </div>
     </div>
   </div>
 </section>
 
-
 <!-- 底部 -->
-  <div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: footer"></div>
 
-  <!-- 脚本 -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script th:src="@{/js/main.js}"></script>
+<!-- 脚本 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
+<script>
+  function buyMovie(btn) {
+    const movieId = btn.getAttribute('data-movie-id');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 处理中...';
+
+    fetch('/api/order/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'movieId=' + encodeURIComponent(movieId)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        // 跳转到收银台页面
+        window.location.href = '/pay?orderNo=' + data.data;
+      } else {
+        alert(data.msg || '购买失败');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cart"></i> 购买此片';
+      }
+    })
+    .catch(e => {
+      alert('请求失败：' + e.message);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-cart"></i> 购买此片';
+    });
+  }
+
+  // 收藏功能
+  const movieId = document.getElementById('favBtn')?.getAttribute('data-movie-id');
+
+  // 页面加载时检查收藏状态
+  if (movieId) {
+    fetch('/api/favorite/check?movieId=' + movieId)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.data) {
+          document.getElementById('favIcon').className = 'bi bi-heart-fill';
+          document.getElementById('favText').textContent = '已收藏';
+          document.getElementById('favBtn').style.borderColor = 'var(--accent)';
+          document.getElementById('favBtn').style.color = 'var(--accent)';
+          document.getElementById('favBtn').style.background = 'var(--accent-light)';
+        }
+      });
+  }
+
+  function toggleFavorite(btn) {
+    const id = btn.getAttribute('data-movie-id');
+    const isFav = document.getElementById('favText').textContent === '已收藏';
+    const url = isFav ? '/api/favorite/remove?movieId=' + id : '/api/favorite/add?movieId=' + id;
+
+    fetch(url, { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          if (isFav) {
+            document.getElementById('favIcon').className = 'bi bi-heart';
+            document.getElementById('favText').textContent = '收藏';
+            btn.style.borderColor = '';
+            btn.style.color = '';
+            btn.style.background = '';
+          } else {
+            document.getElementById('favIcon').className = 'bi bi-heart-fill';
+            document.getElementById('favText').textContent = '已收藏';
+            btn.style.borderColor = 'var(--accent)';
+            btn.style.color = 'var(--accent)';
+            btn.style.background = 'var(--accent-light)';
+          }
+        } else {
+          alert(data.msg);
+        }
+      });
+  }
+
+  // GSAP 动画
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof gsap === 'undefined') return;
+
+    // 电影信息入场
+    gsap.from('.col-md-8', {
+      opacity: 0,
+      x: 30,
+      duration: 0.7,
+      delay: 0.2,
+      ease: 'power2.out'
+    });
+
+    // 评论列表 stagger 入场
+    gsap.utils.toArray('.comment-item').forEach(function(item, i) {
+      gsap.from(item, {
+        opacity: 0,
+        y: 20,
+        duration: 0.4,
+        delay: 0.5 + i * 0.08,
+        ease: 'power2.out'
+      });
+    });
+  });
+</script>
 </body>
 </html>

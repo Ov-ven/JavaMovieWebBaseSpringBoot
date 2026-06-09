@@ -14,6 +14,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 高分排行榜控制器
+ * <p>
+ * 负责展示高分电影排行榜页面，按评分排序展示优质电影。
+ * </p>
+ */
 @Controller
 @RequestMapping("/rank")
 public class TopRankingController {

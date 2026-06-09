@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.software.movie.mapper.UserMapper">
+
+    <!-- 原子扣减余额：只有余额 >= amount 时才扣减 -->
+    <update id="deductBalance">
+        UPDATE user
+        SET balance = balance - #{amount}
+        WHERE id = #{userId} AND balance >= #{amount}
+    </update>
+
+    <!-- 原子增加余额 -->
+    <update id="addBalance">
+        UPDATE user
+        SET balance = balance + #{amount}
+        WHERE id = #{userId}
+    </update>
+
+</mapper>

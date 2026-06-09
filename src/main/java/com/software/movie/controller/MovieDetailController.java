@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.software.movie.entity.Comment;
 import com.software.movie.entity.Movie;
+import com.software.movie.entity.Order;
 import com.software.movie.entity.MoviePerson;
 import com.software.movie.entity.Person;
 import com.software.movie.entity.User;
@@ -21,6 +22,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.stream.Collectors;
+/**
+ * 电影详情页面控制器
+ * <p>
+ * 负责展示电影详情页面，包括电影基本信息、主创人员、评论列表，
+ * 以及通过表单提交添加评论的功能。同时处理播放权限校验。
+ * </p>
+ */
 @EnableCaching
 @Controller
 public class MovieDetailController {
@@ -29,13 +37,17 @@ public class MovieDetailController {
     private MovieService movieService;
     @Autowired
     private CommentService commentService;
+    @Autowired
+    private com.software.movie.mapper.UserMovieEntitlementMapper entitlementMapper;
 
     @Autowired
-    private MoviePersonService moviePersonService; // 用于获取电影与主创的关联
+    private MoviePersonService moviePersonService;
     @Autowired
-    private PersonService personService; // 用于获取主创人员的详细信息
+    private PersonService personService;
     @Autowired
-    private UserService userService; // 用于获取用户信息
+    private UserService userService;
+    @Autowired
+    private OrderService orderService;
 
     /**
      * 显示电影详情页
@@ -83,17 +95,29 @@ public class MovieDetailController {
             return "redirect:/"; // 重定向到首页
         }
         // 3. 判断用户是否有观看权限
-        boolean canWatch = true; // 默认可以观看
-        System.out.println("现在的canWatch值："+canWatch);
-        System.out.println("现在的userisvip值："+user.getIsvip());
-        System.out.println("现在的movieisvip值："+movie.getIsVip());
-        if (movie.getIsVip()==1) { // 如果是VIP影片
-            if (user != null && user.getIsvip()==0) { // 如果用户未登录或是VIP
-                canWatch = false;
-                System.out.println("现在的canWatch值："+canWatch);
+        boolean canWatch = true;
+        boolean isVipMovie = Integer.valueOf(1).equals(movie.getIsVip());
+        boolean isUserVip = Integer.valueOf(1).equals(user.getIsvip());
+        boolean hasPrice = movie.getPrice() != null && movie.getPrice() > 0;
+
+        // 优先查凭证表（最可靠），兜底查订单表
+        if (isVipMovie && !isUserVip) {
+            canWatch = hasEntitlement(user.getId(), id);
+        } else if (!isVipMovie && hasPrice) {
+            canWatch = hasEntitlement(user.getId(), id);
+        }
+
+        // 4. 检查是否有待支付订单（未过期）
+        String pendingOrderNo = null;
+        if (!canWatch && hasPrice) {
+            Order pendingOrder = orderService.getPendingOrder(user.getId(), id);
+            if (pendingOrder != null) {
+                pendingOrderNo = pendingOrder.getOrderNo();
             }
         }
+
         model.addAttribute("canWatch", canWatch);
+        model.addAttribute("pendingOrderNo", pendingOrderNo);
 
         // 4. 获取主创人员信息
         List<MoviePerson> moviePersons = moviePersonService.getMoviePersonsByMovieId(id); // 假设你在MoviePersonService中有一个方法来获取这些关联
@@ -125,13 +149,35 @@ public class MovieDetailController {
                 }
                 commentsWithUserInfo.add(commentMap);
 
-                System.out.println("DEBUG - commentMap for commentId " + comment.getId() + ": " + commentMap);
             }
         }
         model.addAttribute("comments", commentsWithUserInfo);
 
         return "detail"; // 返回 Thymeleaf 模板名称
     }
+    /**
+     * 检查用户是否拥有某部电影的观看凭证
+     */
+    private boolean hasEntitlement(Long userId, Long movieId) {
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.software.movie.entity.UserMovieEntitlement> ew =
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+        ew.eq("user_id", userId).eq("movie_id", movieId);
+        return entitlementMapper.selectCount(ew) > 0;
+    }
+
+    /**
+     * 通过表单提交添加评论
+     * <p>
+     * 用户登录后可以通过表单对电影发表评论和评分。操作完成后重定向回电影详情页。
+     * </p>
+     *
+     * @param movieId            电影 ID
+     * @param score              评分
+     * @param content            评论内容
+     * @param session            HTTP 会话，用于获取当前登录用户
+     * @param redirectAttributes 重定向属性，用于传递 Flash 消息
+     * @return 重定向到电影详情页，未登录则重定向到登录页
+     */
     @PostMapping("/comment/add")
     public String addComment(@RequestParam("movieId") Long movieId,
                              @RequestParam("score") Double score,

@@ -23,6 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 数据图表页面控制器
+ * <p>
+ * 负责渲染电影数据可视化页面，包括电影类型播放量饼图和 Top 10 电影播放量柱状图。
+ * </p>
+ */
 @Controller
 @RequestMapping("/charts")
 public class ChartPageController {
@@ -30,6 +36,17 @@ public class ChartPageController {
     @Autowired
     private MovieService movieService; // 注入 MovieService
     private static final Logger logger = LoggerFactory.getLogger(ChartPageController.class);
+
+    /**
+     * 展示数据图表页面
+     * <p>
+     * 加载电影类型播放量分布数据（饼图）和 Top 10 电影播放量对比数据（柱状图），
+     * 并为 header 片段添加必要的占位符属性。
+     * </p>
+     *
+     * @param model Spring MVC 模型对象，用于向视图传递图表数据
+     * @return charts 视图名称
+     */
     @GetMapping
     public String showChartsPage(Model model) {
         // --- 为 header 片段添加的占位符（如果需要，请保留）---

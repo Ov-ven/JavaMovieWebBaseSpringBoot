@@ -1,10 +1,22 @@
-HELP.md
+# ==================== Maven ====================
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# Maven wrapper (已移除)
+.mvn/
+mvnw
+mvnw.cmd
+
+# ==================== IDE ====================
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Eclipse / STS ###
 .apt_generated
 .classpath
 .factorypath
@@ -12,12 +24,6 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
 
 ### NetBeans ###
 /nbproject/private/
@@ -31,3 +37,61 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# ==================== Java / JVM ====================
+# JVM crash logs
+hs_err_pid*.log
+replay_pid*.log
+
+# Compiled class files
+*.class
+
+# Package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Log files
+*.log
+logs/
+
+# ==================== OS ====================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+
+# ==================== AI / Dev Tools ====================
+# Claude Code
+.claude/
+
+# GitNexus
+.gitnexus/
+
+# 本地开发调试文件
+dev/
+
+# ==================== 敏感配置 ====================
+# 环境变量文件（如包含 API Key）
+.env
+.env.local
+.env.*.local
+
+# 私钥 / 证书
+*.pem
+*.key
+*.p12
+*.jks

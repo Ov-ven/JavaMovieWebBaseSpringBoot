@@ -1,214 +1,287 @@
 <!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>个人中心</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<head th:replace="fragments/header :: head('个人中心')">
   <style>
-    :root {
-      --primary-color: #3498db;
-      --vip-color: #ff9800;
-      --danger-color: #e74c3c;
-      --background-light: #f8f9fa;
-      --text-dark: #343a40;
-      --card-bg: #ffffff;
-      --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      --border-light: #e0e0e0;
-    }
-
-    body {
-      background-color: var(--background-light);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: var(--text-dark);
-      line-height: 1.6;
-    }
-
-    .profile-container {
-      max-width: 700px; /* 进一步缩小最大宽度，适应更少内容 */
-      margin: 80px auto; /* 增加顶部和底部外边距，使页面更居中 */
-      padding: 40px; /* 增加内边距 */
-      box-shadow: var(--card-shadow);
-      border-radius: 15px;
-      background-color: var(--card-bg);
-      text-align: center; /* 使内部元素居中 */
-    }
-
-    /* 头部用户信息区域 */
-    .user-header {
-      background: linear-gradient(135deg, var(--primary-color), #2980b9);
-      color: white;
-      border-radius: 10px;
-      padding: 40px 30px;
-      margin-bottom: 40px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-      display: flex;
-      flex-direction: column; /* 垂直排列内容 */
-      align-items: center; /* 水平居中对齐 */
-    }
-
-    .user-avatar {
-      width: 120px; /* 略微增大头像 */
-      height: 120px;
-      border-radius: 50%;
-      border: 4px solid rgba(255, 255, 255, 0.4);
-      object-fit: cover;
-      margin-bottom: 20px; /* 增加底部间距 */
-      transition: transform 0.3s ease-in-out;
-    }
-
-    .user-avatar:hover {
-      transform: scale(1.08) rotate(3deg);
-    }
-
-    .user-details h4 {
-      font-weight: 600;
-      margin-bottom: 8px; /* 增加底部间距 */
-      font-size: 1.8em; /* 增大用户名 */
-    }
-
-    .profile-summary {
-      font-size: 1.1em;
-      text-align: center;
-      margin-top: 20px;
-      margin-bottom: 25px; /* 增加底部间距 */
-    }
-    .profile-summary h3 {
-      font-weight: 700;
-      margin-bottom: 5px;
-      font-size: 1.6em; /* 增大欢迎语 */
-    }
-    .profile-summary p {
-      font-size: 1em; /* 调整描述文字大小 */
-      opacity: 0.9; /* 稍微提高透明度 */
-    }
-
-    .vip-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 18px; /* 调整内边距，使其更大 */
-      border-radius: 25px;
-      font-weight: bold;
-      font-size: 1em; /* 调整字体大小 */
-      background-color: var(--vip-color);
-      box-shadow: 0 3px 12px rgba(255, 152, 0, 0.4);
-      transition: all 0.3s ease;
-    }
-
-    .vip-badge.not-vip {
-      background-color: #bdbdbd;
-      box-shadow: none;
-      color: #555;
-    }
-
-    .upgrade-section {
-      margin-top: 30px; /* 增加与 VIP 徽章的间距 */
-    }
-
-    .upgrade-btn {
-      background-color: var(--vip-color);
-      border: none;
-      color: white;
-      padding: 15px 40px; /* 进一步增大按钮 */
-      border-radius: 30px;
-      font-weight: bold;
-      font-size: 1.1em; /* 增大按钮文字 */
-      transition: all 0.3s ease-in-out;
-      box-shadow: 0 5px 18px rgba(255, 152, 0, 0.4);
-      display: inline-flex;
-      align-items: center;
-      gap: 10px; /* 增大图标和文字间距 */
-    }
-
-    .upgrade-btn:hover {
-      background-color: #ffb336;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(255, 152, 0, 0.5);
-    }
-
-    .upgrade-btn.not-vip {
-      background-color: #e0e0e0;
-      color: #616161;
-      box-shadow: none;
-    }
-
-    .upgrade-btn.not-vip:hover {
-      background-color: #d5d5d5;
-      transform: none;
-      box-shadow: none;
-    }
-
-    /* 响应式调整 */
-    @media (max-width: 768px) {
-      .profile-container {
-        margin: 30px auto;
-        padding: 25px;
-        max-width: 95%; /* 小屏幕下可以更宽一些 */
-      }
-      .user-header {
-        padding: 25px;
-      }
-      .user-avatar {
-        width: 100px;
-        height: 100px;
-        margin-bottom: 15px;
-      }
-      .user-details h4 {
-        font-size: 1.5em;
-      }
-      .vip-badge {
-        padding: 6px 14px;
-        font-size: 0.9em;
-      }
-      .upgrade-btn {
-        padding: 12px 30px;
-        font-size: 1em;
-      }
-    }
+    .avatar { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg-elevated); box-shadow: var(--shadow-md); }
+    .vip-badge { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; padding: 4px 14px; border-radius: var(--radius-full); font-size: 13px; }
+    .balance-card { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; border-radius: var(--radius-md); padding: 24px; }
+    .balance-card .amount { font-size: 2rem; font-weight: 700; }
+    .order-status { font-size: 12px; padding: 2px 8px; border-radius: var(--radius-full); }
   </style>
 </head>
 <body>
-<div class="profile-container">
-  <div class="user-header">
-    <img th:src="@{'/image/user/' + ${session.user.avatar}}" onerror="this.onerror=null;this.src='/image/default_avatar.png';" alt="用户头像" class="user-avatar">
+<div th:replace="fragments/header :: header"></div>
 
-    <div class="user-details">
-      <h4 th:text="${session.user.username}">用户名</h4>
-      <span class="vip-badge" th:classappend="${session.user.getIsvip()} ? '': 'not-vip'">
-          <i th:class="${session.user.getIsvip()} ? 'bi bi-award-fill' : 'bi bi-person-fill'"></i>
-          <span th:text="${session.user.getIsvip()} ? 'VIP会员' : '普通用户'">普通用户</span>
-      </span>
+<div class="container py-4" style="max-width: 960px;">
+  <!-- 用户信息卡片 -->
+  <div class="card-ed mb-4" style="padding: 0;">
+    <div class="card-body d-flex align-items-center gap-4 p-4">
+      <img th:src="@{'/image/user/' + ${session.user.avatar}}" onerror="this.onerror=null;this.src='/image/default_avatar.png';" class="avatar" alt="头像">
+      <div class="flex-grow-1">
+        <h4 class="mb-1" th:text="${session.user.username}" style="font-family: var(--font-display); font-weight: 700;">用户名</h4>
+        <p class="mb-1" th:text="${session.user.email ?: '未设置邮箱'}" style="color: var(--text-secondary); font-size: 14px;">邮箱</p>
+        <p class="mb-0" th:text="${session.user.phone ?: '未设置手机'}" style="color: var(--text-secondary); font-size: 14px;">手机</p>
+      </div>
+      <div class="text-end">
+        <span th:if="${session.user.isvip == 1}" class="vip-badge"><i class="bi bi-award-fill"></i> VIP会员</span>
+        <span th:unless="${session.user.isvip == 1}" class="badge" style="background: var(--border); color: var(--text-secondary); border-radius: var(--radius-full);">普通用户</span>
+        <div th:if="${session.user.isvip == 1 and session.user.vipExpireTime != null}" style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">
+          到期：<span th:text="${#dates.format(session.user.vipExpireTime, 'yyyy-MM-dd')}"></span>
+        </div>
+      </div>
     </div>
-
-    <div class="profile-summary">
-      <h3>欢迎回来，<span th:text="${session.user.username}"></span>！</h3>
-      <p th:text="${session.user.getIsvip()} ? '尊贵的VIP会员，享受无限制观影体验！' : '成为VIP，解锁更多精彩电影！'"></p>
-    </div>
-
-    <div class="upgrade-section">
-      <!-- 动态切换跳转链接和样式类 -->
-      <a th:href="${session.user.isvip==1 ? '/vip/manage' : '/vip/upgrade'}"
-         class="upgrade-btn"
-         th:classappend="${session.user.getIsvip()} ? 'vip-manage-btn' : 'not-vip'">
-        <i th:class="${session.user.getIsvip()} ? 'bi bi-gear-fill' : 'bi bi-gem'"></i>
-        <span th:text="${session.user.getIsvip()} ? '管理VIP' : '升级VIP'"></span>
-      </a>
-    </div>
-
   </div>
 
+  <!-- Tab 导航 -->
+  <ul class="nav nav-tabs mb-3" id="profileTabs" role="tablist">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#balance">余额充值</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#orders">我的订单</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#settings">个人信息</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- 余额充值 -->
+    <div class="tab-pane fade show active" id="balance">
+      <div class="balance-card mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="small" style="opacity: 0.75;">账户余额</div>
+            <div class="amount">¥<span th:text="${session.user.balance != null ? #numbers.formatDecimal(session.user.balance, 1, 2) : '0.00'}">0.00</span></div>
+          </div>
+          <i class="bi bi-wallet2" style="font-size:2.5rem;opacity:0.3"></i>
+        </div>
+      </div>
+      <div class="card-ed" style="padding: 0;">
+        <div class="card-body p-4">
+          <h5 class="mb-3" style="font-family: var(--font-display); font-weight: 700;">余额充值</h5>
+          <div class="row g-2 mb-3">
+            <div class="col-4 col-md-2"><button class="btn btn-outline-primary w-100 recharge-quick" data-amount="10">¥10</button></div>
+            <div class="col-4 col-md-2"><button class="btn btn-outline-primary w-100 recharge-quick" data-amount="20">¥20</button></div>
+            <div class="col-4 col-md-2"><button class="btn btn-outline-primary w-100 recharge-quick" data-amount="50">¥50</button></div>
+            <div class="col-4 col-md-2"><button class="btn btn-outline-primary w-100 recharge-quick" data-amount="100">¥100</button></div>
+            <div class="col-4 col-md-2"><button class="btn btn-outline-primary w-100 recharge-quick" data-amount="200">¥200</button></div>
+            <div class="col-4 col-md-2"><button class="btn btn-outline-primary w-100 recharge-quick" data-amount="500">¥500</button></div>
+          </div>
+          <div class="input-group mb-3" style="max-width:300px">
+            <span class="input-group-text">¥</span>
+            <input type="number" id="rechargeAmount" class="form-control" placeholder="自定义金额" min="1" step="0.01">
+            <button class="btn-primary" id="rechargeBtn" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">充值</button>
+          </div>
+          <div id="rechargeResult" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 我的订单 -->
+    <div class="tab-pane fade" id="orders">
+      <div class="card-ed" style="padding: 0;">
+        <div class="card-body p-4">
+          <h5 class="mb-3" style="font-family: var(--font-display); font-weight: 700;">我的订单</h5>
+          <div id="orderList">
+            <div class="text-center py-4" id="orderLoading" style="color: var(--text-muted);">加载中...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 个人信息 -->
+    <div class="tab-pane fade" id="settings">
+      <div class="card-ed mb-4" style="padding: 0;">
+        <div class="card-body p-4">
+          <h5 class="mb-3" style="font-family: var(--font-display); font-weight: 700;">修改个人信息</h5>
+          <form id="profileForm">
+            <div class="form-group">
+              <label class="form-label">用户名</label>
+              <input type="text" class="form-input" th:value="${session.user.username}" disabled style="background: var(--bg-primary);">
+            </div>
+            <div class="form-group">
+              <label class="form-label">邮箱</label>
+              <input type="email" class="form-input" id="email" th:value="${session.user.email}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">手机号</label>
+              <input type="tel" class="form-input" id="phone" th:value="${session.user.phone}">
+            </div>
+            <button type="submit" class="btn-primary">保存修改</button>
+            <div id="profileResult" class="mt-2"></div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card-ed" style="padding: 0;">
+        <div class="card-body p-4">
+          <h5 class="mb-3" style="font-family: var(--font-display); font-weight: 700;">修改密码</h5>
+          <form id="passwordForm">
+            <div class="form-group">
+              <label class="form-label">新密码</label>
+              <input type="password" class="form-input" id="newPassword" placeholder="请输入新密码" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">确认新密码</label>
+              <input type="password" class="form-input" id="confirmPassword" placeholder="请再次输入新密码" required>
+            </div>
+            <button type="submit" class="btn-primary" style="background: var(--accent-hover);">修改密码</button>
+            <div id="passwordResult" class="mt-2"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
+<div th:replace="fragments/footer :: footer"></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  document.querySelector('.upgrade-btn')?.addEventListener('click', function(e) {
-    // 仅对"升级VIP"按钮显示确认弹窗
-    if (this.textContent.includes('升级VIP') && !confirm('确定要升级VIP吗？')) {
-      e.preventDefault();
+  // 快捷充值按钮
+  document.querySelectorAll('.recharge-quick').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById('rechargeAmount').value = this.getAttribute('data-amount');
+    });
+  });
+
+  // 充值
+  document.getElementById('rechargeBtn').addEventListener('click', function() {
+    const amount = document.getElementById('rechargeAmount').value;
+    if (!amount || amount <= 0) { alert('请输入有效金额'); return; }
+
+    this.disabled = true;
+    this.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+
+    fetch('/api/user/recharge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'amount=' + encodeURIComponent(amount)
+    })
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('rechargeResult');
+      if (data.success) {
+        el.innerHTML = '<div class="alert alert-success">充值成功！余额已更新</div>';
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        el.innerHTML = '<div class="alert alert-danger">' + data.msg + '</div>';
+      }
+    })
+    .catch(e => alert('请求失败：' + e.message))
+    .finally(() => { this.disabled = false; this.innerHTML = '充值'; });
+  });
+
+  // 加载订单列表
+  document.querySelector('[href="#orders"]').addEventListener('shown.bs.tab', function() {
+    fetch('/api/order/my')
+      .then(r => r.json())
+      .then(data => {
+        const el = document.getElementById('orderList');
+        if (!data.success || !data.data || data.data.length === 0) {
+          el.innerHTML = '<div class="text-center py-4" style="color: var(--text-muted);">暂无订单</div>';
+          return;
+        }
+        let html = '<div class="table-responsive"><table class="table"><thead><tr><th>订单号</th><th>电影</th><th>总额</th><th>余额付</th><th>支付宝付</th><th>类型</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+        data.data.forEach(o => {
+          const typeMap = {1:'单片购买', 2:'VIP购买', 3:'秒杀订单'};
+          const statusMap = {0:'待支付', 1:'已支付', 2:'已取消'};
+          const statusClass = {0:'bg-warning', 1:'bg-success', 2:'bg-secondary'};
+          html += '<tr>';
+          html += '<td><small>' + (o.orderNo ? o.orderNo.substring(0,8) + '...' : '-') + '</small></td>';
+          html += '<td>' + (o.movieTitle || '-') + '</td>';
+          html += '<td>¥' + (o.amount ? o.amount.toFixed(2) : '0.00') + '</td>';
+          html += '<td>' + (o.balancePaid > 0 ? '<span style="color: var(--accent);">¥' + o.balancePaid.toFixed(2) + '</span>' : '-') + '</td>';
+          html += '<td>' + (o.alipayPaid > 0 ? '¥' + o.alipayPaid.toFixed(2) : '-') + '</td>';
+          html += '<td>' + (typeMap[o.orderType] || '-') + '</td>';
+          html += '<td><span class="order-status ' + (statusClass[o.status]||'bg-secondary') + ' text-white">' + (statusMap[o.status]||'-') + '</span></td>';
+          html += '<td><small>' + (o.createTime || '-') + '</small></td>';
+          html += '<td>';
+          if (o.status === 0) {
+            html += '<button class="btn btn-sm btn-success me-1" onclick="payOrder(\'' + o.orderNo + '\', ' + o.amount + ')">继续支付</button>';
+            html += '<button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(\'' + o.orderNo + '\')">取消</button>';
+          } else if (o.status === 1 && o.movieId) {
+            html += '<a href="/detail/' + o.movieId + '" class="btn btn-sm btn-primary">观看</a>';
+          }
+          html += '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        el.innerHTML = html;
+      })
+      .catch(() => {
+        document.getElementById('orderList').innerHTML = '<div class="text-center py-4" style="color: var(--accent);">加载失败</div>';
+      });
+  });
+
+  // 取消订单
+  function cancelOrder(orderNo) {
+    if (!confirm('确认取消此订单？')) return;
+    fetch('/api/order/cancel?orderNo=' + encodeURIComponent(orderNo), {
+      method: 'POST'
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) { alert('已取消'); location.reload(); }
+      else alert(data.msg);
+    })
+    .catch(e => alert('请求失败：' + e.message));
+  }
+
+  // 继续支付 → 跳转收银台
+  function payOrder(orderNo, amount) {
+    window.location.href = '/pay?orderNo=' + encodeURIComponent(orderNo);
+  }
+
+  // 修改个人信息
+  document.getElementById('profileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+
+    fetch('/api/user/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, phone: phone })
+    })
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('profileResult');
+      if (data.success) {
+        el.innerHTML = '<div class="alert alert-success">修改成功</div>';
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        el.innerHTML = '<div class="alert alert-danger">' + data.msg + '</div>';
+      }
+    })
+    .catch(e => alert('请求失败：' + e.message));
+  });
+
+  // 修改密码
+  document.getElementById('passwordForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const newPwd = document.getElementById('newPassword').value;
+    const confirmPwd = document.getElementById('confirmPassword').value;
+    const el = document.getElementById('passwordResult');
+
+    if (!newPwd || newPwd.length < 3) {
+      el.innerHTML = '<div class="alert alert-danger">密码长度不能少于3位</div>';
+      return;
     }
-    // "管理VIP"按钮直接跳转，无需确认
+    if (newPwd !== confirmPwd) {
+      el.innerHTML = '<div class="alert alert-danger">两次密码不一致</div>';
+      return;
+    }
+
+    fetch('/api/user/changePassword', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'newPassword=' + encodeURIComponent(newPwd)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        el.innerHTML = '<div class="alert alert-success">密码修改成功，请重新登录</div>';
+        setTimeout(() => window.location.href = '/logout', 1500);
+      } else {
+        el.innerHTML = '<div class="alert alert-danger">' + data.msg + '</div>';
+      }
+    })
+    .catch(e => alert('请求失败：' + e.message));
   });
 </script>
 </body>

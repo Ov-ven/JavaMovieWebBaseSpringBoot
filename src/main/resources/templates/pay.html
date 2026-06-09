@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>收银台 - 电影平台</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" th:href="@{/css/design-system.css}">
+  <style>
+    .pay-method {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg-card);
+    }
+    .pay-method:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+    .pay-method.selected {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+    }
+    .pay-method .icon { font-size: 2rem; margin-right: 16px; }
+    .balance-info {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #fff;
+      border-radius: var(--radius-md);
+      padding: 16px 24px;
+    }
+  </style>
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<div class="container py-5" style="max-width: 600px;">
+  <div class="card-ed" style="padding:32px;">
+    <h4 style="font-family:var(--font-display);font-weight:700;margin-bottom:24px;"><i class="bi bi-credit-card me-2"></i>收银台</h4>
+
+    <!-- 订单信息 -->
+    <div style="background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);padding:16px;margin-bottom:24px;">
+      <div class="d-flex justify-content-between mb-2">
+        <span style="color:var(--text-muted);">电影</span>
+        <span style="font-weight:600;" th:text="${movieTitle}">-</span>
+      </div>
+      <div class="d-flex justify-content-between mb-2">
+        <span style="color:var(--text-muted);">订单号</span>
+        <span style="font-size:13px;" th:text="${orderNo}">-</span>
+      </div>
+      <div th:if="${balancePaid > 0}" class="d-flex justify-content-between mb-2">
+        <span style="color:var(--text-muted);">订单总额</span>
+        <span th:text="'¥' + ${#numbers.formatDecimal(totalAmount, 1, 2)}">-</span>
+      </div>
+      <div th:if="${balancePaid > 0}" class="d-flex justify-content-between mb-2">
+        <span style="color:var(--text-muted);">已用余额支付</span>
+        <span style="color:var(--accent);font-weight:600;">-¥<span th:text="${#numbers.formatDecimal(balancePaid, 1, 2)}"></span></span>
+      </div>
+      <div class="d-flex justify-content-between">
+        <span style="color:var(--text-muted);" th:text="${balancePaid > 0 ? '还需支付' : '应付金额'}">应付金额</span>
+        <span style="font-size:1.5rem;color:var(--accent);font-weight:700;" th:text="'¥' + ${#numbers.formatDecimal(amount, 1, 2)}">¥0.00</span>
+      </div>
+    </div>
+
+    <!-- 余额信息 -->
+    <div class="balance-info mb-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-wallet2 me-2"></i>账户余额</span>
+        <span style="font-size:1.25rem;font-weight:700;" th:text="'¥' + ${#numbers.formatDecimal(balance, 1, 2)}">¥0.00</span>
+      </div>
+      <div th:if="${balance > 0 and balance < amount}" style="margin-top:4px;font-size:13px;opacity:0.8;">
+        余额可先支付 <span th:text="'¥' + ${#numbers.formatDecimal(balance, 1, 2)}"></span>，剩余 <span th:text="'¥' + ${#numbers.formatDecimal(amount - balance, 1, 2)}"></span> 用支付宝补差
+      </div>
+      <div th:if="${balance == 0}" style="margin-top:4px;font-size:13px;opacity:0.8;">
+        余额为0，请选择支付宝支付
+      </div>
+    </div>
+
+    <!-- 支付方式选择 -->
+    <h6 style="font-family:var(--font-display);font-weight:600;margin-bottom:12px;">选择支付方式</h6>
+
+    <div class="pay-method mb-3" id="methodBalance" onclick="selectMethod('balance')">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-wallet2 icon" style="color:var(--accent);"></i>
+        <div>
+          <div style="font-weight:600;">余额支付</div>
+          <div style="font-size:13px;color:var(--text-muted);" th:if="${balance >= amount}">余额充足，推荐使用</div>
+          <div style="font-size:13px;color:var(--text-muted);" th:if="${balance > 0 and balance < amount}" th:text="'先扣余额¥' + ${#numbers.formatDecimal(balance, 1, 2)} + '，剩余支付宝补差'">-</div>
+          <div style="font-size:13px;color:var(--text-muted);" th:if="${balance == 0}">余额为0，不可用</div>
+        </div>
+        <i class="bi bi-check-circle-fill ms-auto d-none check-icon" style="color:var(--accent);"></i>
+      </div>
+    </div>
+
+    <div class="pay-method mb-3" id="methodAlipay" onclick="selectMethod('alipay')">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-phone icon" style="color:#22c55e;"></i>
+        <div>
+          <div style="font-weight:600;">支付宝支付</div>
+          <div style="font-size:13px;color:var(--text-muted);">跳转支付宝收银台</div>
+        </div>
+        <i class="bi bi-check-circle-fill ms-auto d-none check-icon" style="color:var(--accent);"></i>
+      </div>
+    </div>
+
+    <!-- 沙箱环境提示 -->
+    <div style="background:var(--accent-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text-secondary);">
+      <i class="bi bi-info-circle me-1"></i>
+      <strong>沙箱环境</strong>：支付宝沙箱服务器偶尔响应较慢，如遇 504 超时请刷新页面重试。支付完成后如显示"待支付"，请点击下方"同步"按钮。
+    </div>
+
+    <button class="btn-primary" id="payBtn" onclick="doPay()" disabled style="width:100%;justify-content:center;padding:16px;font-size:16px;">
+      确认支付
+    </button>
+    <div style="text-align:center;margin-top:12px;">
+      <a th:href="@{/profile}" style="color:var(--text-muted);font-size:13px;">返回个人中心</a>
+      <span style="margin:0 8px;color:var(--border);">|</span>
+      <a href="javascript:void(0)" style="color:var(--text-muted);font-size:13px;" onclick="syncStatus()">支付成功但显示待支付？点此同步</a>
+    </div>
+
+    <div id="payResult" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- 通过隐藏 input 传递 Thymeleaf 变量到 JS -->
+<input type="hidden" id="dataOrderNo" th:value="${orderNo}">
+<input type="hidden" id="dataAmount" th:value="${amount}">
+<input type="hidden" id="dataBalance" th:value="${balance}">
+
+<div th:replace="fragments/footer :: footer"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const orderNo = document.getElementById('dataOrderNo').value;
+  const amount = parseFloat(document.getElementById('dataAmount').value) || 0;
+  const balance = parseFloat(document.getElementById('dataBalance').value) || 0;
+  let selectedMethod = null;
+
+  function selectMethod(method) {
+    selectedMethod = method;
+    document.querySelectorAll('.pay-method').forEach(el => {
+      el.classList.remove('selected');
+      el.querySelector('.check-icon').classList.add('d-none');
+    });
+    const selected = document.getElementById(method === 'balance' ? 'methodBalance' : 'methodAlipay');
+    selected.classList.add('selected');
+    selected.querySelector('.check-icon').classList.remove('d-none');
+    document.getElementById('payBtn').disabled = false;
+    document.getElementById('payBtn').textContent = method === 'balance'
+      ? '余额支付 ¥' + amount.toFixed(2)
+      : '支付宝支付 ¥' + amount.toFixed(2);
+  }
+
+  function doPay() {
+    if (!selectedMethod) return;
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 处理中...';
+
+    if (selectedMethod === 'balance') {
+      fetch('/api/order/payWithBalance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'orderNo=' + encodeURIComponent(orderNo)
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          if (data.data && typeof data.data === 'number' && data.data > 0) {
+            // 余额不足，已扣部分，剩余走支付宝
+            document.getElementById('payResult').innerHTML = '<div style="background:var(--accent-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--text-secondary);"><i class="bi bi-info-circle me-2"></i>' + data.msg + '，正在跳转支付宝...</div>';
+            setTimeout(() => document.getElementById('alipayForm').submit(), 1500);
+          } else {
+            // 全额余额支付成功
+            document.getElementById('payResult').innerHTML = '<div style="background:var(--accent-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--accent);"><i class="bi bi-check-circle me-2"></i>支付成功！</div>';
+            btn.textContent = '支付成功';
+            setTimeout(() => window.location.href = '/', 2000);
+          }
+        } else {
+          document.getElementById('payResult').innerHTML = '<div style="background:var(--accent-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--accent);">' + data.msg + '</div>';
+          btn.disabled = false;
+          btn.textContent = '确认支付';
+        }
+      })
+      .catch(e => {
+        alert('请求失败：' + e.message);
+        btn.disabled = false;
+        btn.textContent = '确认支付';
+      });
+    } else {
+      // 支付宝全额支付 → 提交表单（POST 方式）
+      document.getElementById('payResult').innerHTML = '<div style="background:var(--accent-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--text-secondary);"><i class="bi bi-hourglass-split me-2"></i>正在跳转支付宝，沙箱环境较慢请耐心等待...</div>';
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 跳转中...';
+      setTimeout(() => {
+        document.getElementById('alipayForm').submit();
+      }, 500);
+    }
+  }
+
+  // 初始化：余额为0时禁用余额选项
+  if (balance <= 0) {
+    document.getElementById('methodBalance').style.opacity = '0.5';
+    document.getElementById('methodBalance').style.pointerEvents = 'none';
+    selectMethod('alipay');
+  } else if (balance >= amount) {
+    selectMethod('balance');
+  } else {
+    // 有余额但不足，默认选中余额（会自动跳支付宝补差）
+    selectMethod('balance');
+  }
+
+  // 手动同步订单状态
+  function syncStatus() {
+    fetch('/api/order/syncStatus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'orderNo=' + encodeURIComponent(orderNo)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('payResult').innerHTML = '<div style="background:var(--accent-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--accent);"><i class="bi bi-check-circle me-2"></i>' + data.msg + '</div>';
+        setTimeout(() => window.location.href = '/', 2000);
+      } else {
+        document.getElementById('payResult').innerHTML = '<div style="background:var(--accent-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--text-secondary);">' + data.msg + '</div>';
+      }
+    })
+    .catch(e => alert('请求失败：' + e.message));
+  }
+</script>
+
+<!-- 支付宝支付表单（POST 提交，解决 405 问题） -->
+<form id="alipayForm" th:action="@{/api/order/payWithAlipay}" method="post" style="display:none;">
+  <input type="hidden" name="orderNo" th:value="${orderNo}">
+</form>
+
+</body>
+</html>

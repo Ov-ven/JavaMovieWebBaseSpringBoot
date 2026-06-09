@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 主创人员控制器
+ * <p>
+ * 负责展示主创人员详情页面，包括主创基本信息及其参与的电影列表。
+ * </p>
+ */
 @Controller
 @RequestMapping("/person")
 public class PersonController {
@@ -27,8 +33,17 @@ public class PersonController {
     private MovieService movieService;
 
 
-    // PersonController.java
-
+    /**
+     * 展示主创人员详情页面
+     * <p>
+     * 根据主创人员 ID 获取其详细信息及参与的电影列表，并为 header 片段添加必要的占位符属性。
+     * 如果主创人员不存在则跳转到 404 错误页面。
+     * </p>
+     *
+     * @param personId 主创人员 ID
+     * @param model    Spring MVC 模型对象，用于向视图传递数据
+     * @return person 视图名称，或 error/404 视图名称
+     */
     @GetMapping("/{id}")
     public String getPersonDetail(@PathVariable("id") Long personId, Model model) {
         // 1. 获取主创信息

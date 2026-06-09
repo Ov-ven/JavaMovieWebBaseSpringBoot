@@ -3,7 +3,12 @@ package com.software.movie.service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+/**
+ * 报表服务接口。
+ * 提供数据报表的生成功能，支持导出 Excel 格式。
+ */
 public interface ReportService {
+
     /**
      * 生成电影播放量榜单的 Excel 报表。
      *

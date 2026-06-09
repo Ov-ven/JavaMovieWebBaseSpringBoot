@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的收藏 - 电影平台</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" th:href="@{/css/design-system.css}">
+  <style>
+    .unfav-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: var(--radius-full);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .unfav-btn:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state i { font-size: 64px; margin-bottom: 16px; display: block; }
+  </style>
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<div class="section">
+  <div class="container">
+    <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:32px;"><i class="bi bi-heart-fill" style="color:var(--accent);margin-right:8px;"></i>我的收藏</h3>
+
+    <div id="favContainer" class="row">
+      <div class="empty-state col-12">
+        <i class="bi bi-heart"></i>
+        <p>加载中...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function loadFavorites() {
+    fetch('/api/favorite/list')
+      .then(r => r.json())
+      .then(data => {
+        const container = document.getElementById('favContainer');
+        if (!data.success || !data.data || data.data.length === 0) {
+          container.innerHTML = '<div class="empty-state col-12"><i class="bi bi-heart"></i><p>暂无收藏，去首页看看有什么好电影吧！</p><a href="/" class="btn-primary mt-3" style="display:inline-flex;">去逛逛</a></div>';
+          return;
+        }
+        let html = '';
+        data.data.forEach(m => {
+          html += '<div class="col-md-3 col-6 mb-4">';
+          html += '  <div class="movie-card" style="position:relative;">';
+          html += '    <button class="unfav-btn" onclick="removeFavorite(' + m.id + ', this)" title="取消收藏"><i class="bi bi-heart-fill"></i></button>';
+          html += '    <a href="/detail/' + m.id + '" style="text-decoration:none;color:inherit;">';
+          html += '      <div class="movie-cover-wrap">';
+          html += '        <img src="/image/' + (m.cover || 'default.jpg') + '" class="movie-cover" alt="">';
+          html += '        ' + (m.isVip == 1 ? '<span class="movie-badge badge-vip">VIP</span>' : '');
+          html += '        <span class="movie-score"><i class="bi bi-star-fill"></i> ' + (m.score || '-') + '</span>';
+          html += '      </div>';
+          html += '      <div class="movie-info">';
+          html += '        <div class="movie-title">' + (m.title || '-') + '</div>';
+          html += '        <div class="movie-meta">' + (m.type || '') + (m.region ? ' / ' + m.region : '') + '</div>';
+          html += '      </div>';
+          html += '    </a>';
+          html += '  </div>';
+          html += '</div>';
+        });
+        container.innerHTML = html;
+      })
+      .catch(() => {
+        document.getElementById('favContainer').innerHTML = '<div class="empty-state col-12"><p style="color:var(--accent);">加载失败</p></div>';
+      });
+  }
+
+  function removeFavorite(movieId, btn) {
+    if (!confirm('确认取消收藏？')) return;
+    fetch('/api/favorite/remove?movieId=' + movieId, { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          btn.closest('.col-md-3').remove();
+        } else {
+          alert(data.msg);
+        }
+      });
+  }
+
+  loadFavorites();
+</script>
+</body>
+</html>

@@ -1,91 +1,89 @@
 <!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP会员管理</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <th:block th:replace="fragments/header :: head('VIP会员管理')"></th:block>
     <style>
-        :root {
-            --vip-color: #4CAF50;
-            --card-bg: #ffffff;
-            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .vip-container {
+        .manage-container {
             max-width: 600px;
             margin: 40px auto;
-            padding: 30px;
-            background: var(--card-bg);
-            border-radius: 15px;
-            box-shadow: var(--card-shadow);
+            padding: 36px;
         }
-
-        .vip-header {
+        .manage-header {
             text-align: center;
             margin-bottom: 30px;
         }
-
-        .vip-icon {
+        .manage-icon {
             font-size: 3rem;
-            color: var(--vip-color);
+            color: var(--accent);
             margin-bottom: 15px;
         }
-
-        .vip-title {
+        .manage-title {
+            font-family: var(--font-display);
             font-weight: 700;
-            color: var(--vip-color);
+            color: var(--accent);
             margin-bottom: 10px;
         }
-
-        .vip-info-card {
-            border-left: 4px solid var(--vip-color);
-            padding: 15px;
-            margin-bottom: 20px;
-            background: rgba(76, 175, 80, 0.05);
+        .manage-expire {
+            color: var(--text-secondary);
+            font-size: 14px;
         }
-
+        .vip-info-card {
+            border-left: 4px solid var(--accent);
+            padding: 16px 20px;
+            margin-bottom: 0;
+            background: var(--accent-light);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+        .vip-info-card h5 {
+            font-family: var(--font-display);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        .vip-info-card h5 i { color: var(--accent); }
         .vip-feature-list {
             list-style-type: none;
             padding: 0;
+            margin: 0;
         }
-
         .vip-feature-list li {
             padding: 8px 0;
             display: flex;
             align-items: center;
+            font-size: 14px;
+            color: var(--text-primary);
         }
-
         .vip-feature-list i {
-            color: var(--vip-color);
+            color: var(--accent);
             margin-right: 10px;
         }
     </style>
 </head>
 <body>
-<div class="vip-container">
-    <div class="vip-header">
-        <i class="bi bi-award-fill vip-icon"></i>
-        <h2 class="vip-title">尊贵的VIP会员</h2>
-        <p>您的VIP有效期至：<span th:text="${#dates.format(session.user.vipExpireTime, 'yyyy年MM月dd日')}"></span></p>
-    </div>
+<div th:replace="fragments/header :: header"></div>
 
-    <div class="vip-info-card">
-        <h5><i class="bi bi-info-circle"></i> 会员特权</h5>
-        <ul class="vip-feature-list">
-            <li><i class="bi bi-check2-circle"></i> 无广告观看所有电影</li>
-            <li><i class="bi bi-check2-circle"></i> 高清1080P/4K画质</li>
-            <li><i class="bi bi-check2-circle"></i> 独家导演剪辑版内容</li>
-            <li><i class="bi bi-check2-circle"></i> 每月3次免费观影券</li>
-        </ul>
+<div class="container">
+    <div class="manage-container card-ed">
+        <div class="manage-header">
+            <i class="bi bi-award-fill manage-icon"></i>
+            <h2 class="manage-title">尊贵的VIP会员</h2>
+            <p class="manage-expire">您的VIP有效期至：<span th:text="${#dates.format(session.user.vipExpireTime, 'yyyy年MM月dd日')}"></span></p>
+        </div>
+
+        <div class="vip-info-card">
+            <h5><i class="bi bi-info-circle"></i> 会员特权</h5>
+            <ul class="vip-feature-list">
+                <li><i class="bi bi-check2-circle"></i> 无广告观看所有电影</li>
+                <li><i class="bi bi-check2-circle"></i> 高清1080P/4K画质</li>
+                <li><i class="bi bi-check2-circle"></i> 独家导演剪辑版内容</li>
+                <li><i class="bi bi-check2-circle"></i> 每月3次免费观影券</li>
+            </ul>
+        </div>
     </div>
 </div>
+
+<div th:replace="fragments/footer :: footer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

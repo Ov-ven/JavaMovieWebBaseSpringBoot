@@ -12,12 +12,24 @@ import org.springframework.util.DigestUtils;
 import java.util.Calendar;
 import java.util.Date;
 
+/**
+ * 用户服务实现类。
+ * 提供用户注册、登录验证、信息更新及VIP升级等功能。
+ * 密码使用 MD5 哈希存储。
+ */
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Autowired
     private UserMapper userMapper;
 
-
+    /**
+     * 用户登录验证。
+     * 根据用户名查询用户，并对输入密码进行 MD5 哈希后与数据库存储的哈希值比对。
+     *
+     * @param username 用户名
+     * @param password 密码（明文）
+     * @return 登录成功返回用户实体，用户名不存在或密码不匹配返回 null
+     */
     @Override
     public User login(String username, String password) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -35,6 +47,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return null; // 用户不存在或密码不匹配
     }
 
+    /**
+     * 用户注册。
+     * 用户名已存在时返回 false；密码自动进行 MD5 哈希后存储。
+     *
+     * @param user 用户实体（需包含 username 和 password）
+     * @return 注册是否成功
+     */
     @Override
     public boolean register(User user) {
         if (checkUsername(user.getUsername())) {
@@ -47,6 +66,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userMapper.insert(user) > 0;
     }
 
+    /**
+     * 检查用户名是否已存在
+     *
+     * @param username 用户名
+     * @return 用户名是否已被占用
+     */
     @Override
     public boolean checkUsername(String username) {
         QueryWrapper<User> wrapper = new QueryWrapper<>();
@@ -54,6 +79,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userMapper.selectCount(wrapper) > 0;
     }
 
+    /**
+     * 根据用户名查询用户
+     *
+     * @param username 用户名
+     * @return 用户实体，不存在时返回 null
+     */
     @Override
     public User getByUsername(String username) {
         QueryWrapper<User> wrapper = new QueryWrapper<>();
@@ -61,13 +92,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userMapper.selectOne(wrapper);
     }
 
+    /**
+     * 更新用户信息
+     *
+     * @param user 用户实体
+     * @return 操作是否成功
+     */
     @Override
     public boolean updateUserInfo(User user) {
         return userMapper.updateById(user) > 0;
     }
 
+    /**
+     * 升级VIP（默认1个月）
+     *
+     * @param userId 用户ID
+     * @return 操作是否成功
+     */
     @Override
     public boolean upgradeToVip(Long userId) {
+        return upgradeToVip(userId, 1);
+    }
+
+    /**
+     * 升级VIP，指定月数。
+     * 若用户当前VIP未过期，则在到期时间基础上续期；否则从当前时间开始计算。
+     *
+     * @param userId 用户ID
+     * @param months VIP月数
+     * @return 操作是否成功（用户不存在时返回 false）
+     */
+    @Override
+    public boolean upgradeToVip(Long userId, int months) {
         User user = userMapper.selectById(userId);
         if (user == null) {
             return false;
@@ -79,10 +135,54 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         } else {
             calendar.setTime(new Date());
         }
-        calendar.add(Calendar.MONTH, 1); // 增加1个月VIP
+        calendar.add(Calendar.MONTH, months);
 
         user.setIsvip(1);
         user.setVipExpireTime(calendar.getTime());
         return userMapper.updateById(user) > 0;
+    }
+
+    /**
+     * 余额充值（原子操作）
+     *
+     * @param userId 用户ID
+     * @param amount 充值金额（正数）
+     * @return 操作是否成功
+     */
+    @Override
+    public boolean recharge(Long userId, Double amount) {
+        if (amount == null || amount <= 0) return false;
+        return userMapper.addBalance(userId, new java.math.BigDecimal(String.valueOf(amount))) > 0;
+    }
+
+    /**
+     * 余额扣减（原子操作，防并发超额扣减）
+     *
+     * @param userId 用户ID
+     * @param amount 扣减金额（正数）
+     * @return 操作是否成功
+     * @throws BusinessException 余额不足时抛出
+     */
+    @Override
+    public boolean deductBalance(Long userId, Double amount) {
+        if (amount == null || amount <= 0) return false;
+        int rows = userMapper.deductBalance(userId, new java.math.BigDecimal(String.valueOf(amount)));
+        if (rows == 0) {
+            throw new com.software.movie.common.BusinessException("余额不足或扣减失败");
+        }
+        return true;
+    }
+
+    /**
+     * 余额退款（原子操作）
+     *
+     * @param userId 用户ID
+     * @param amount 退款金额（正数）
+     * @return 操作是否成功
+     */
+    @Override
+    public boolean refundBalance(Long userId, Double amount) {
+        if (amount == null || amount <= 0) return false;
+        return userMapper.addBalance(userId, new java.math.BigDecimal(String.valueOf(amount))) > 0;
     }
 }

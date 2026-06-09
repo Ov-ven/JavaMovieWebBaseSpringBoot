@@ -15,6 +15,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 热播排行榜控制器
+ * <p>
+ * 负责展示热播电影排行榜页面，按播放量排序展示热门电影。
+ * </p>
+ */
 @Controller
 @RequestMapping("/rank") // 添加类级别的请求映射
 public class HotRankingController {
@@ -23,6 +29,13 @@ public class HotRankingController {
     private MovieService movieService;
 
 
+    /**
+     * 展示热播电影排行榜页面
+     *
+     * @param limit 显示的电影数量，默认 10
+     * @param model Spring MVC ModelMap 对象，用于向视图传递数据
+     * @return rank/hot 视图名称
+     */
     @GetMapping("/hot")
     public String hotRanking(@RequestParam(defaultValue = "10") Integer limit, ModelMap model) {
         List<Movie> movies = movieService.getHotMovies(limit);

@@ -16,6 +16,12 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * 报表导出控制器
+ * <p>
+ * 提供数据报表导出功能，支持将电影播放量排行榜导出为 Excel 文件下载。
+ * </p>
+ */
 @RestController // 这是一个 RESTful 控制器，直接返回数据 (文件流)
 @RequestMapping("/report") // API 基路径
 public class ReportController {

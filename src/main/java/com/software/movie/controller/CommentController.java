@@ -13,6 +13,13 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
 
 
+/**
+ * 评论管理控制器
+ * <p>
+ * 提供电影评论的 CRUD 接口，包括评论列表查询、添加评论、删除评论、更新评论等功能。
+ * 所有写操作均需要用户登录，且修改/删除操作仅限评论所有者。
+ * </p>
+ */
 @RestController
 @RequestMapping("/api/comment")
 public class CommentController {
@@ -21,6 +28,14 @@ public class CommentController {
     @Autowired
     private MovieService movieService;
 
+    /**
+     * 获取指定电影的评论列表（分页）
+     *
+     * @param pageNum  页码，默认 1
+     * @param pageSize 每页条数，默认 10
+     * @param movieId  电影 ID
+     * @return 包含分页评论数据的统一响应结果
+     */
     @GetMapping("/list")
     public Result getCommentList(@RequestParam(defaultValue = "1") Integer pageNum,
                                  @RequestParam(defaultValue = "10") Integer pageSize,
@@ -29,6 +44,16 @@ public class CommentController {
         return Result.success(page);
     }
 
+    /**
+     * 添加评论
+     * <p>
+     * 用户登录后可以对电影发表评论。评论成功后会自动更新电影的评分。
+     * </p>
+     *
+     * @param comment 评论实体，包含电影 ID、评论内容和评分
+     * @param session HTTP 会话，用于获取当前登录用户信息
+     * @return 操作结果，成功返回提示信息，未登录返回错误提示
+     */
     @PostMapping("/add")
     public Result addComment(@RequestBody Comment comment, HttpSession session) {
         User user = (User) session.getAttribute("user");
@@ -45,6 +70,13 @@ public class CommentController {
         return Result.error("评论失败");
     }
 
+    /**
+     * 获取当前用户对指定电影的评论
+     *
+     * @param movieId 电影 ID
+     * @param session HTTP 会话，用于获取当前登录用户信息
+     * @return 包含评论数据的统一响应结果，未登录返回错误提示
+     */
     @GetMapping("/my")
     public Result getMyComment(@RequestParam Long movieId, HttpSession session) {
         User user = (User) session.getAttribute("user");
@@ -56,6 +88,16 @@ public class CommentController {
         return Result.success(comment);
     }
 
+    /**
+     * 删除评论
+     * <p>
+     * 仅允许评论所有者删除自己的评论。删除成功后会自动更新对应电影的评分。
+     * </p>
+     *
+     * @param id      评论 ID
+     * @param session HTTP 会话，用于获取当前登录用户信息
+     * @return 操作结果，成功返回提示信息，无权或未登录返回错误提示
+     */
     @DeleteMapping("/delete/{id}")
     public Result deleteComment(@PathVariable Long id, HttpSession session) {
         User user = (User) session.getAttribute("user");
@@ -82,6 +124,16 @@ public class CommentController {
         return Result.error("删除失败");
     }
 
+    /**
+     * 更新评论
+     * <p>
+     * 仅允许评论所有者修改自己的评论。更新成功后会自动更新对应电影的评分。
+     * </p>
+     *
+     * @param comment 评论实体，包含评论 ID、新内容和评分
+     * @param session HTTP 会话，用于获取当前登录用户信息
+     * @return 操作结果，成功返回提示信息，无权或未登录返回错误提示
+     */
     @PutMapping("/update")
     public Result updateComment(@RequestBody Comment comment, HttpSession session) {
         User user = (User) session.getAttribute("user");
