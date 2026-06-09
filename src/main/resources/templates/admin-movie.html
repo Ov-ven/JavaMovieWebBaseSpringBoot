@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员后台 - 电影管理</title>
+    <!-- Element UI -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #faf8f5;
+            --bg-elevated: #ffffff;
+            --accent: #c0392b;
+            --accent-hover: #a93226;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b6b6b;
+            --border: #e8e5e0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+            --radius-md: 14px;
+            --font-display: 'Playfair Display', Georgia, serif;
+            --font-body: 'DM Sans', -apple-system, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            min-height: 100vh;
+        }
+
+        /* ========== 顶部导航 ========== */
+        .admin-nav {
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+        .admin-nav .logo {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .admin-nav .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+        .admin-nav .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .admin-nav .nav-links a:hover { color: var(--accent); }
+
+        /* ========== 主内容区 ========== */
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .page-header h1 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        /* ========== 搜索栏 ========== */
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .search-bar .el-input {
+            width: 300px;
+        }
+
+        /* ========== 表格卡片 ========== */
+        .table-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        /* ========== Element UI 覆盖 ========== */
+        .el-button--primary {
+            background-color: var(--accent) !important;
+            border-color: var(--accent) !important;
+        }
+        .el-button--primary:hover {
+            background-color: var(--accent-hover) !important;
+            border-color: var(--accent-hover) !important;
+        }
+        .el-table th {
+            background-color: #fafafa !important;
+            font-weight: 600 !important;
+        }
+        .el-dialog__header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px !important;
+        }
+        .el-dialog__title {
+            font-family: var(--font-display) !important;
+            font-weight: 600 !important;
+        }
+
+        /* ========== 状态标签 ========== */
+        .status-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-tag.active {
+            background: rgba(46, 204, 113, 0.1);
+            color: #27ae60;
+        }
+        .status-tag.inactive {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+        .vip-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            background: rgba(241, 196, 15, 0.15);
+            color: #f39c12;
+        }
+
+        /* ========== 操作按钮组 ========== */
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* ========== MQ 状态指示器 ========== */
+        .mq-indicator {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 20px;
+            box-shadow: var(--shadow-md);
+            font-size: 13px;
+            color: var(--text-secondary);
+            z-index: 200;
+            max-width: 320px;
+        }
+        .mq-indicator .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        .mq-indicator .dot.active { background: #27ae60; }
+        .mq-indicator .dot.idle { background: #95a5a6; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航 -->
+        <nav class="admin-nav">
+            <a href="/" class="logo">懋懋电影 · 管理后台</a>
+            <div class="nav-links">
+                <a href="/">返回首页</a>
+                <a href="/chat">AI 助手</a>
+            </div>
+        </nav>
+
+        <!-- 主内容 -->
+        <div class="admin-container">
+            <!-- 页头 -->
+            <div class="page-header">
+                <h1>电影管理</h1>
+                <el-button type="primary" icon="el-icon-plus" @click="openDialog(null)">
+                    新增电影
+                </el-button>
+            </div>
+
+            <!-- 搜索栏 -->
+            <div class="search-bar">
+                <el-input
+                    v-model="searchTitle"
+                    placeholder="搜索电影名称..."
+                    prefix-icon="el-icon-search"
+                    clearable
+                    @clear="loadMovies"
+                    @keyup.enter.native="loadMovies">
+                </el-input>
+                <el-button type="primary" plain @click="loadMovies">搜索</el-button>
+                <el-button plain @click="resetSearch">重置</el-button>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="table-card">
+                <el-table :data="movies" stripe style="width: 100%" v-loading="loading">
+                    <el-table-column prop="id" label="ID" width="70" sortable></el-table-column>
+                    <el-table-column prop="title" label="电影名称" min-width="180">
+                        <template slot-scope="scope">
+                            <strong>{{ scope.row.title }}</strong>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="type" label="类型" width="120"></el-table-column>
+                    <el-table-column prop="region" label="地区" width="100"></el-table-column>
+                    <el-table-column prop="score" label="评分" width="80" sortable>
+                        <template slot-scope="scope">
+                            <span style="color: #f39c12; font-weight: 600;">{{ scope.row.score || '-' }}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="price" label="价格" width="90" sortable>
+                        <template slot-scope="scope">
+                            <span v-if="scope.row.price && scope.row.price > 0">¥{{ scope.row.price }}</span>
+                            <span v-else style="color: #27ae60;">免费</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="VIP" width="70" align="center">
+                        <template slot-scope="scope">
+                            <span v-if="scope.row.isVip === 1" class="vip-tag">VIP</span>
+                            <span v-else style="color: #999;">-</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="状态" width="80" align="center">
+                        <template slot-scope="scope">
+                            <span :class="['status-tag', scope.row.status ? 'active' : 'inactive']">
+                                {{ scope.row.status ? '上架' : '下架' }}
+                            </span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="160" fixed="right">
+                        <template slot-scope="scope">
+                            <div class="action-btns">
+                                <el-button size="mini" type="primary" plain
+                                    @click="openDialog(scope.row)">编辑</el-button>
+                                <el-button size="mini" type="danger" plain
+                                    @click="confirmDelete(scope.row)">删除</el-button>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <!-- 分页 -->
+                <div style="margin-top: 20px; text-align: right;">
+                    <el-pagination
+                        background
+                        layout="total, prev, pager, next, sizes"
+                        :total="total"
+                        :page-size="pageSize"
+                        :current-page="pageNum"
+                        :page-sizes="[5, 10, 20, 50]"
+                        @current-change="handlePageChange"
+                        @size-change="handleSizeChange">
+                    </el-pagination>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新增/编辑对话框 -->
+        <el-dialog :title="isEdit ? '编辑电影' : '新增电影'" :visible.sync="dialogVisible" width="600px" :close-on-click-modal="false">
+            <el-form :model="form" label-width="80px" label-position="left">
+                <el-form-item label="电影名称" required>
+                    <el-input v-model="form.title" placeholder="请输入电影名称"></el-input>
+                </el-form-item>
+                <el-row :gutter="16">
+                    <el-col :span="12">
+                        <el-form-item label="类型">
+                            <el-input v-model="form.type" placeholder="如：动作,科幻"></el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="地区">
+                            <el-input v-model="form.region" placeholder="如：美国"></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="16">
+                    <el-col :span="8">
+                        <el-form-item label="评分">
+                            <el-input-number v-model="form.score" :min="0" :max="10" :step="0.1" :precision="1" style="width: 100%;"></el-input-number>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-form-item label="价格">
+                            <el-input-number v-model="form.price" :min="0" :step="1" :precision="2" style="width: 100%;"></el-input-number>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-form-item label="时长">
+                            <el-input-number v-model="form.duration" :min="0" :step="1" style="width: 100%;"></el-input-number>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="16">
+                    <el-col :span="8">
+                        <el-form-item label="VIP">
+                            <el-switch v-model="form.isVip" :active-value="1" :inactive-value="0"
+                                active-text="VIP" inactive-text="普通"></el-switch>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-form-item label="状态">
+                            <el-switch v-model="form.status"
+                                active-text="上架" inactive-text="下架"></el-switch>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-form-item label="上映日期">
+                            <el-date-picker v-model="form.releaseDate" type="date"
+                                value-format="timestamp" placeholder="选择日期" style="width: 100%;"></el-date-picker>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-form-item label="封面URL">
+                    <el-input v-model="form.cover" placeholder="图片地址"></el-input>
+                </el-form-item>
+                <el-form-item label="简介">
+                    <el-input v-model="form.description" type="textarea" :rows="3" placeholder="电影简介"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer">
+                <el-button @click="dialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="submitForm" :loading="submitting">
+                    {{ isEdit ? '保存修改' : '确认新增' }}
+                </el-button>
+            </div>
+        </el-dialog>
+
+        <!-- MQ 状态指示器 -->
+        <div class="mq-indicator">
+            <span class="dot" :class="mqStatus"></span>
+            <span v-if="mqStatus === 'active'">向量同步链路已就绪（RocketMQ 活跃）</span>
+            <span v-else>等待操作...</span>
+        </div>
+    </div>
+
+    <!-- Vue.js 2 + Element UI -->
+    <script src="https://unpkg.com/vue@2.7.16/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    movies: [],
+                    total: 0,
+                    pageNum: 1,
+                    pageSize: 10,
+                    searchTitle: '',
+                    loading: false,
+                    dialogVisible: false,
+                    isEdit: false,
+                    submitting: false,
+                    mqStatus: 'idle',
+                    form: {
+                        id: null,
+                        title: '',
+                        type: '',
+                        region: '',
+                        score: 0,
+                        price: 0,
+                        duration: 0,
+                        isVip: 0,
+                        status: true,
+                        cover: '',
+                        description: '',
+                        releaseDate: null
+                    }
+                };
+            },
+            created() {
+                this.loadMovies();
+            },
+            methods: {
+                // ========== 加载数据 ==========
+                async loadMovies() {
+                    this.loading = true;
+                    try {
+                        const params = new URLSearchParams({
+                            pageNum: this.pageNum,
+                            pageSize: this.pageSize
+                        });
+                        if (this.searchTitle) params.append('title', this.searchTitle);
+
+                        const res = await fetch('/admin/movie/list?' + params);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.movies = data.data.records;
+                            this.total = data.data.total;
+                        } else {
+                            this.$message.error(data.msg || '加载失败');
+                        }
+                    } catch (e) {
+                        this.$message.error('网络错误: ' + e.message);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                // ========== 分页 ==========
+                handlePageChange(page) {
+                    this.pageNum = page;
+                    this.loadMovies();
+                },
+                handleSizeChange(size) {
+                    this.pageSize = size;
+                    this.pageNum = 1;
+                    this.loadMovies();
+                },
+
+                // ========== 搜索重置 ==========
+                resetSearch() {
+                    this.searchTitle = '';
+                    this.pageNum = 1;
+                    this.loadMovies();
+                },
+
+                // ========== 打开对话框 ==========
+                openDialog(row) {
+                    if (row) {
+                        this.isEdit = true;
+                        // 复制数据并对 null 数值字段赋予默认值，避免 el-input-number 显示空白
+                        this.form = {
+                            ...row,
+                            score: row.score != null ? row.score : 0,
+                            price: row.price != null ? row.price : 0,
+                            duration: row.duration != null ? row.duration : 0,
+                            isVip: row.isVip != null ? row.isVip : 0,
+                            status: row.status != null ? row.status : true
+                        };
+                    } else {
+                        this.isEdit = false;
+                        this.form = {
+                            id: null, title: '', type: '', region: '',
+                            score: 0, price: 0, duration: 0, isVip: 0,
+                            status: true, cover: '', description: '', releaseDate: null
+                        };
+                    }
+                    this.dialogVisible = true;
+                },
+
+                // ========== 提交表单 ==========
+                async submitForm() {
+                    if (!this.form.title || !this.form.title.trim()) {
+                        this.$message.warning('请输入电影名称');
+                        return;
+                    }
+                    this.submitting = true;
+                    try {
+                        const url = this.isEdit ? '/admin/movie/update' : '/admin/movie/add';
+                        const method = this.isEdit ? 'PUT' : 'POST';
+
+                        const res = await fetch(url, {
+                            method: method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.form)
+                        });
+                        const data = await res.json();
+
+                        if (data.success) {
+                            this.$message.success(this.isEdit ? '修改成功，已触发向量同步' : '新增成功，已触发向量同步');
+                            this.dialogVisible = false;
+                            this.mqStatus = 'active';
+                            setTimeout(() => { this.mqStatus = 'idle'; }, 5000);
+                            this.loadMovies();
+                        } else {
+                            this.$message.error(data.msg || '操作失败');
+                        }
+                    } catch (e) {
+                        this.$message.error('网络错误: ' + e.message);
+                    } finally {
+                        this.submitting = false;
+                    }
+                },
+
+                // ========== 删除确认 ==========
+                confirmDelete(row) {
+                    this.$confirm(
+                        `确定要删除电影「${row.title}」吗？删除后将自动清除向量索引。`,
+                        '删除确认',
+                        {
+                            confirmButtonText: '确认删除',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }
+                    ).then(() => {
+                        this.doDelete(row.id);
+                    }).catch(() => {});
+                },
+
+                // ========== 执行删除 ==========
+                async doDelete(id) {
+                    try {
+                        const res = await fetch('/admin/movie/delete/' + id, { method: 'DELETE' });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.$message.success('删除成功，已触发向量同步');
+                            this.mqStatus = 'active';
+                            setTimeout(() => { this.mqStatus = 'idle'; }, 5000);
+                            this.loadMovies();
+                        } else {
+                            this.$message.error(data.msg || '删除失败');
+                        }
+                    } catch (e) {
+                        this.$message.error('网络错误: ' + e.message);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

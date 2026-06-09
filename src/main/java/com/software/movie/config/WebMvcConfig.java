@@ -53,7 +53,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/comment/list",    // 评论列表（公开浏览）
 
                         // ==================== 外部回调 ====================
-                        "/payment/notify"       // 支付宝异步通知回调
+                        "/payment/notify",      // 支付宝异步通知回调
+
+                        // ==================== 管理后台（无鉴权） ====================
+                        "/admin/**",            // 管理员后台接口
+                        "/admin-movie"          // 管理员后台页面
                 );
     }
 }

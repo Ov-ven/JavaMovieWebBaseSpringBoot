@@ -297,4 +297,12 @@ public class HomeController {
     public String managePage() {
         return "manage"; // 对应模板文件 vip/manage.html
     }
+
+    /**
+     * 管理员电影管理后台页面（无鉴权）。
+     */
+    @GetMapping("/admin-movie")
+    public String adminMoviePage() {
+        return "admin-movie";
+    }
 }
