@@ -29,27 +29,39 @@ public class AlipayConfig {
 
     private static final Logger log = LoggerFactory.getLogger(AlipayConfig.class);
 
-    /** 应用ID */
+    /**
+     * 应用ID
+     */
     @Value("${alipay.appId:}")
     private String appId;
 
-    /** 应用私钥 */
+    /**
+     * 应用私钥
+     */
     @Value("${alipay.appPrivateKey:}")
     private String appPrivateKey;
 
-    /** 支付宝公钥 */
+    /**
+     * 支付宝公钥
+     */
     @Value("${alipay.alipayPublicKey:}")
     private String alipayPublicKey;
 
-    /** 支付宝网关地址（默认沙箱环境） */
+    /**
+     * 支付宝网关地址（默认沙箱环境）
+     */
     @Value("${alipay.gateway:https://openapi-sandbox.dl.alipaydev.com/gateway.do}")
     private String gateway;
 
-    /** 异步通知回调URL */
+    /**
+     * 异步通知回调URL
+     */
     @Value("${alipay.notifyUrl}")
     private String notifyUrl;
 
-    /** 同步跳转URL */
+    /**
+     * 同步跳转URL
+     */
     @Value("${alipay.returnUrl:}") // 注意这里如果设置为/,也要确保正确配置
     private String returnUrl;
 

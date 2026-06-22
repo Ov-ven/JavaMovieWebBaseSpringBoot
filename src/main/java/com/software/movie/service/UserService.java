@@ -51,6 +51,15 @@ public interface UserService extends IService<User> {
     boolean updateUserInfo(User user);
 
     /**
+     * 判断用户是否为有效VIP。
+     * <p>读时判断：如果 isvip=1 但 vip_expire_time 已过期，会立即将数据库中 isvip 重置为 0。</p>
+     *
+     * @param userId 用户ID
+     * @return true=有效VIP，false=非VIP或已过期
+     */
+    boolean isVip(Long userId);
+
+    /**
      * 升级VIP（默认1个月）
      *
      * @param userId 用户ID

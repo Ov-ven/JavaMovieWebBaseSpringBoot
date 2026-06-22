@@ -59,8 +59,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: '123456'
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: '6379'
-      MIMO_API_KEY: ${MIMO_API_KEY}
-      Llm_Embedding_Apikey: ${Llm_Embedding_Apikey}
+      LLM_API_KEY: ${LLM_API_KEY}
       Alipay_AppId: ${Alipay_AppId}
       Alipay_AppPrivateKey: ${Alipay_AppPrivateKey}
       Alipay_AlipayPublicKey: ${Alipay_AlipayPublicKey}

@@ -42,22 +42,18 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
     /**
      * 添加或更新评论。
-     * 若用户已对该电影评论过，则更新原有评论内容和评分。
+     * <p>基于 (user_id, movie_id) 唯一索引，使用 INSERT ... ON DUPLICATE KEY UPDATE
+     * 一条 SQL 完成，避免先查后写的并发问题。</p>
      *
      * @param comment 评论实体
      * @return 操作是否成功
      */
     @Override
     public boolean addComment(Comment comment) {
-        // 检查用户是否已经评论过该电影
-        Comment existing = commentMapper.selectByUserAndMovie(comment.getUserId(), comment.getMovieId());
-        if (existing != null) {
-            // 如果已评论，则更新原有评论
-            existing.setContent(comment.getContent());
-            existing.setScore(comment.getScore());
-            return this.updateById(existing);
-        }
-        return this.save(comment);
+        return commentMapper.upsertComment(
+                comment.getUserId(), comment.getMovieId(),
+                comment.getContent(), comment.getScore()
+        ) > 0;
     }
 
     /**

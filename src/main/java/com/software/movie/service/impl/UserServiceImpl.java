@@ -104,6 +104,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
+     * 判断用户是否为有效VIP。
+     * <p>读时判断：如果 isvip=1 但 vip_expire_time 已过期，立即将数据库中 isvip 重置为 0。</p>
+     *
+     * @param userId 用户ID
+     * @return true=有效VIP，false=非VIP或已过期
+     */
+    @Override
+    public boolean isVip(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null || user.getIsvip() != 1) {
+            return false;
+        }
+        // 检查是否过期
+        if (user.getVipExpireTime() != null && user.getVipExpireTime().before(new Date())) {
+            // 已过期，降级
+            user.setIsvip(0);
+            userMapper.updateById(user);
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * 升级VIP（默认1个月）
      *
      * @param userId 用户ID

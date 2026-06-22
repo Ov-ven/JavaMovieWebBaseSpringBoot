@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.software.movie.entity.Comment;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -57,4 +58,22 @@ public interface CommentMapper extends BaseMapper<Comment> {
      * @return 受影响行数
      */
     int updateComment(Comment comment);
+
+    /**
+     * 插入或更新评论（基于 user_id + movie_id 唯一索引）。
+     * <p>如果该用户已评论过该电影，则更新内容和评分；否则插入新评论。</p>
+     *
+     * @param userId  用户ID
+     * @param movieId 电影ID
+     * @param content 评论内容
+     * @param score   评分
+     * @return 受影响行数（1=新增，2=更新）
+     */
+    @Insert("INSERT INTO comment (user_id, movie_id, content, score) " +
+            "VALUES (#{userId}, #{movieId}, #{content}, #{score}) " +
+            "ON DUPLICATE KEY UPDATE content = VALUES(content), score = VALUES(score)")
+    int upsertComment(@Param("userId") Long userId,
+                      @Param("movieId") Long movieId,
+                      @Param("content") String content,
+                      @Param("score") Double score);
 }

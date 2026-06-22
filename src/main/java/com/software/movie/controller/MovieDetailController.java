@@ -97,7 +97,7 @@ public class MovieDetailController {
         // 3. 判断用户是否有观看权限
         boolean canWatch = true;
         boolean isVipMovie = Integer.valueOf(1).equals(movie.getIsVip());
-        boolean isUserVip = Integer.valueOf(1).equals(user.getIsvip());
+        boolean isUserVip = userService.isVip(user.getId());
         boolean hasPrice = movie.getPrice() != null && movie.getPrice() > 0;
 
         // 优先查凭证表（最可靠），兜底查订单表

@@ -17,7 +17,9 @@
           <div class="movie-cover-wrap">
             <img th:src="@{'/image/'+${movie.cover}}" class="movie-cover" alt="电影封面">
             <span th:if="${movie.isVip == 1}" class="movie-badge badge-vip">VIP</span>
-            <span th:if="${movie.price != null and movie.price > 0}" class="movie-badge badge-price" th:text="'¥' + ${#numbers.formatDecimal(movie.price, 1, 2)}"></span>
+            <span th:if="${movie.seckillPrice != null}" class="movie-badge" style="background:#e74c3c;color:#fff;bottom:auto;top:8px;left:8px;right:auto;">⚡限时秒杀</span>
+            <span th:if="${movie.seckillPrice != null}" class="movie-badge badge-price" th:text="'¥' + ${#numbers.formatDecimal(movie.seckillPrice, 1, 2)}"></span>
+            <span th:if="${movie.seckillPrice == null and movie.price != null and movie.price > 0}" class="movie-badge badge-price" th:text="'¥' + ${#numbers.formatDecimal(movie.price, 1, 2)}"></span>
             <span th:if="${movie.score != null}" class="movie-score">
               <i class="bi bi-star-fill"></i>
               <span th:text="${movie.score}"></span>
@@ -37,8 +39,16 @@
                class="btn-primary" style="justify-content:center;width:100%;margin-bottom:8px;">
               <i class="bi bi-clock-history"></i> 继续支付（30分钟内有效）
             </a>
-            <!-- 无待支付订单 → 购买此片 -->
-            <a th:if="${pendingOrderNo == null and movie.price != null and movie.price > 0}"
+            <!-- 无待支付订单 → 秒杀购买（优先） -->
+            <a th:if="${pendingOrderNo == null and movie.seckillPrice != null}"
+               class="btn-primary" style="justify-content:center;width:100%;margin-bottom:8px;background:#e74c3c;"
+               th:attr="data-movie-id=${movie.id}"
+               onclick="seckillMovie(this)" href="javascript:void(0)">
+              <i class="bi bi-lightning"></i> 限时秒杀 ¥<span th:text="${#numbers.formatDecimal(movie.seckillPrice, 1, 2)}"></span>
+              <span style="text-decoration:line-through;opacity:0.7;margin-left:6px;">¥<span th:text="${#numbers.formatDecimal(movie.price, 1, 2)}"></span></span>
+            </a>
+            <!-- 无待支付订单 → 普通购买 -->
+            <a th:if="${pendingOrderNo == null and (movie.seckillPrice == null) and movie.price != null and movie.price > 0}"
                class="btn-primary" style="justify-content:center;width:100%;margin-bottom:8px;"
                th:attr="data-movie-id=${movie.id}, data-price=${movie.price}"
                onclick="buyMovie(this)" href="javascript:void(0)">
@@ -161,7 +171,6 @@
     .then(r => r.json())
     .then(data => {
       if (data.success) {
-        // 跳转到收银台页面
         window.location.href = '/pay?orderNo=' + data.data;
       } else {
         alert(data.msg || '购买失败');
@@ -174,6 +183,62 @@
       btn.disabled = false;
       btn.innerHTML = '<i class="bi bi-cart"></i> 购买此片';
     });
+  }
+
+  function seckillMovie(btn) {
+    const movieId = btn.getAttribute('data-movie-id');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> 抢购中...';
+
+    fetch('/api/seckill/doSeckill?movieId=' + encodeURIComponent(movieId), {
+      method: 'POST'
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        // 秒杀成功，拿到 orderNo，跳转支付页
+        window.location.href = '/pay?orderNo=' + data.data;
+      } else if (data.code === 202) {
+        // 还在排队，轮询结果
+        pollSeckillResult(movieId, btn);
+      } else {
+        alert(data.msg || '秒杀失败');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-lightning"></i> 限时秒杀';
+      }
+    })
+    .catch(e => {
+      alert('请求失败：' + e.message);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-lightning"></i> 限时秒杀';
+    });
+  }
+
+  function pollSeckillResult(movieId, btn) {
+    let attempts = 0;
+    const timer = setInterval(function() {
+      attempts++;
+      fetch('/api/seckill/result?movieId=' + movieId)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            clearInterval(timer);
+            window.location.href = '/pay?orderNo=' + data.data;
+          } else if (attempts >= 10) {
+            clearInterval(timer);
+            alert('排队超时，请在"我的订单"中查看');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-lightning"></i> 限时秒杀';
+          }
+        })
+        .catch(function() {
+          if (attempts >= 10) {
+            clearInterval(timer);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-lightning"></i> 限时秒杀';
+          }
+        });
+    }, 1000);
   }
 
   // 收藏功能

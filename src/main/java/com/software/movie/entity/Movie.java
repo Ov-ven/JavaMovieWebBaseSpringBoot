@@ -3,6 +3,7 @@ package com.software.movie.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -14,6 +15,7 @@ import java.util.Date;
 @TableName("movie")
 public class Movie implements Serializable {
     
+    @Serial
     private static final long serialVersionUID = 1L;
     /** 电影ID，自增主键 */
     @TableId(type = IdType.AUTO)
@@ -61,6 +63,10 @@ public class Movie implements Serializable {
 
     /** 价格（元） */
     private Double price;
+    /** 秒杀价（元），null 表示不参与秒杀 */
+    private Double seckillPrice;
+    /** 秒杀库存，null 表示不参与秒杀 */
+    private Integer seckillStock;
 
     /** 上架状态（true-上架，false-下架） */
     private Boolean status;

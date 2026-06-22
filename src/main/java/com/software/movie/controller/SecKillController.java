@@ -27,7 +27,9 @@ public class SecKillController {
     private OrderService orderService;
 
     /**
-     * 发起秒杀
+     * 发起秒杀。
+     * <p>发送 MQ 事务消息后，轮询等待订单生成（最多 3 秒），
+     * 成功则返回 orderNo，超时返回 202 让前端继续轮询。</p>
      */
     @PostMapping("/doSeckill")
     public Result doSeckill(@RequestParam Long movieId) {
@@ -38,11 +40,21 @@ public class SecKillController {
         if (user == null) {
             return Result.error("请先登录");
         }
-        boolean success = secKillService.executeSeckill(movieId, user.getId());
-        if (success) {
-            return Result.success("抢购成功，正在排队生成订单");
+        boolean submitted = secKillService.executeSeckill(movieId, user.getId());
+        if (!submitted) {
+            return Result.error("手慢了，已售罄");
         }
-        return Result.error("手慢了，已售罄");
+
+        // 轮询等待订单生成（MQ 异步落库需要时间）
+        for (int i = 0; i < 6; i++) {
+            try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+            Order order = orderService.getByUserIdAndMovieId(user.getId(), movieId);
+            if (order != null) {
+                return Result.success("秒杀成功", order.getOrderNo());
+            }
+        }
+        // 超时，让前端继续轮询
+        return Result.error(202, "正在排队处理中，请稍后查询结果");
     }
 
     /**

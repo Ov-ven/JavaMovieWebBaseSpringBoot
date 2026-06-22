@@ -8,7 +8,10 @@ import com.software.movie.service.MovieService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * 管理员电影管理控制器（无鉴权）。
@@ -23,6 +26,11 @@ public class AdminMovieController {
 
     @Autowired
     private MovieService movieService;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
+    private static final String STOCK_KEY_PREFIX = "seckill:stock:movie:";
 
     /**
      * 分页查询电影（支持按名称模糊搜索）。
@@ -43,6 +51,18 @@ public class AdminMovieController {
         }
         wrapper.orderByDesc("create_time");
         Page<Movie> result = movieService.page(page, wrapper);
+
+        // 补充 Redis 实时库存（覆盖 MySQL 的配置值）
+        for (Movie movie : result.getRecords()) {
+            if (movie.getSeckillStock() != null) {
+                String key = STOCK_KEY_PREFIX + movie.getId();
+                String val = stringRedisTemplate.opsForValue().get(key);
+                if (val != null) {
+                    movie.setSeckillStock(Integer.parseInt(val));
+                }
+            }
+        }
+
         return Result.success(result);
     }
 
@@ -121,5 +141,38 @@ public class AdminMovieController {
             return Result.success("删除成功");
         }
         return Result.error("删除失败");
+    }
+
+    /**
+     * 上架秒杀：设置秒杀价 + 初始化 Redis 库存。
+     *
+     * @param movieId      电影ID
+     * @param seckillPrice 秒杀价
+     * @param seckillStock 秒杀库存
+     * @return 操作结果
+     */
+    @PostMapping("/seckill")
+    public Result setupSeckill(@RequestParam Long movieId,
+                               @RequestParam Double seckillPrice,
+                               @RequestParam Integer seckillStock) {
+        Movie movie = movieService.getById(movieId);
+        if (movie == null) {
+            return Result.error("电影不存在");
+        }
+        // 更新电影秒杀字段
+        movie.setSeckillPrice(seckillPrice);
+        movie.setSeckillStock(seckillStock);
+        movieService.updateById(movie);
+
+        // 写入 Redis 库存
+        String key = STOCK_KEY_PREFIX + movieId;
+        stringRedisTemplate.opsForValue().set(key, String.valueOf(seckillStock));
+
+        log.info("上架秒杀: movieId={}, price={}, stock={}", movieId, seckillPrice, seckillStock);
+        return Result.success("秒杀上架成功", Map.of(
+                "movieId", movieId,
+                "seckillPrice", seckillPrice,
+                "seckillStock", seckillStock
+        ));
     }
 }

@@ -1,15 +1,17 @@
 package com.software.movie.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import com.software.movie.common.Result;
 import com.software.movie.entity.Movie;
-import com.software.movie.entity.Order;
 import com.software.movie.entity.User;
+import com.software.movie.entity.UserMovieEntitlement;
 import com.software.movie.entity.dto.MovieQueryDTO;
+import com.software.movie.mapper.UserMovieEntitlementMapper;
 import com.software.movie.service.MovieService;
-import com.software.movie.service.OrderService;
+import com.software.movie.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.ui.Model;
@@ -24,7 +26,6 @@ import java.util.List;
  * 按主创人员查询、月度/全站排行以及播放权限校验等功能。
  * </p>
  */
-@EnableCaching
 @RestController
 @RequestMapping("/api/movie")
 public class MovieController {
@@ -32,7 +33,10 @@ public class MovieController {
     private MovieService movieService;
 
     @Autowired
-    private OrderService orderService;
+    private UserService userService;
+
+    @Autowired
+    private UserMovieEntitlementMapper entitlementMapper;
 
 
 
@@ -115,6 +119,7 @@ public class MovieController {
      * 校验电影播放权限
      * <p>
      * 检查用户是否登录以及是否有权限观看指定电影（VIP 影片需要 VIP 用户）。
+     * 通过查询 user_movie_entitlement 凭证表判断是否已购买。
      * </p>
      *
      * @param movieId 电影 ID
@@ -132,23 +137,30 @@ public class MovieController {
             return Result.error("电影不存在");
         }
         boolean isVipMovie = Integer.valueOf(1).equals(movie.getIsVip());
-        boolean isUserVip = Integer.valueOf(1).equals(user.getIsvip());
+        boolean isUserVip = userService.isVip(user.getId());
         boolean hasPrice = movie.getPrice() != null && movie.getPrice() > 0;
 
         if (isVipMovie && !isUserVip) {
-            // 非VIP用户看VIP电影 → 必须已购买
-            Order paidOrder = orderService.getPaidOrder(user.getId(), movieId);
-            if (paidOrder == null) {
+            // 非VIP用户看VIP电影 → 必须有购买凭证
+            if (!hasEntitlement(user.getId(), movieId)) {
                 return Result.error("此影片为VIP专享，请购买后观看");
             }
         } else if (!isVipMovie && hasPrice) {
-            // 非VIP电影但有价格 → 必须已购买
-            Order paidOrder = orderService.getPaidOrder(user.getId(), movieId);
-            if (paidOrder == null) {
+            // 非VIP电影但有价格 → 必须有购买凭证
+            if (!hasEntitlement(user.getId(), movieId)) {
                 return Result.error("此影片需购买后观看");
             }
         }
         return Result.success("可以播放");
+    }
+
+    /**
+     * 检查用户是否拥有某部电影的观看凭证
+     */
+    private boolean hasEntitlement(Long userId, Long movieId) {
+        QueryWrapper<UserMovieEntitlement> ew = new QueryWrapper<>();
+        ew.eq("user_id", userId).eq("movie_id", movieId);
+        return entitlementMapper.selectCount(ew) > 0;
     }
 
 }

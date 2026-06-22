@@ -18,7 +18,7 @@
       <div class="card-ed" style="padding: 40px 36px;">
         <h4 class="mb-4" style="font-family: var(--font-display); font-weight: 700; color: var(--text-primary);">用户登录</h4>
         <form id="loginForm">
-          <div id="loginError" class="alert alert-danger d-none"></div>
+          <div id="loginError" class="alert alert-danger" style="display:none;"></div>
 
           <div class="form-group">
             <label for="username" class="form-label">用户名</label>
@@ -30,12 +30,11 @@
             <input type="password" class="form-input" id="password" name="password" required>
           </div>
 
-          <div class="mb-3 d-flex justify-content-between align-items-center">
+          <div class="mb-3">
             <div class="form-check">
               <input type="checkbox" class="form-check-input" id="remember" name="remember">
               <label class="form-check-label" for="remember" style="font-size:14px; color: var(--text-secondary);">记住我</label>
             </div>
-            <a th:href="@{/forgot}" style="font-size:14px; color: var(--accent); text-decoration: none;">忘记密码?</a>
           </div>
 
           <button type="submit" class="btn-primary w-100" style="justify-content: center; padding: 14px 28px;">登录</button>
@@ -72,12 +71,10 @@
               const errorDiv = document.getElementById('loginError');
 
               if (data.success) {
-                // 登录成功，隐藏错误信息并跳转
                 errorDiv.style.display = 'none';
                 window.location.href = '/';
               } else {
-                // 登录失败，显示错误信息
-                errorDiv.textContent = data.message; // 显示后端返回的错误信息
+                errorDiv.textContent = data.msg || '登录失败';
                 errorDiv.style.display = 'block';
               }
             })

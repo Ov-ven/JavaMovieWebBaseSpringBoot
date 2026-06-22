@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:replace="fragments/header :: head('秒杀压测面板')"></th:block>
+  <style>
+    body { background: #0d1117; color: #c9d1d9; }
+    .test-wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+    h1 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 8px; color: #e6edf3; }
+    h1 span { color: var(--accent); }
+    .subtitle { color: #8b949e; font-size: 13px; margin-bottom: 32px; }
+
+    /* ========== 面板卡片 ========== */
+    .panel {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .panel-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-title i { color: var(--accent); }
+
+    /* ========== 表单行 ========== */
+    .form-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 12px; color: #8b949e; }
+    .form-group input {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #c9d1d9;
+      font-size: 14px;
+      font-family: 'Menlo', 'Consolas', monospace;
+      width: 140px;
+      outline: none;
+    }
+    .form-group input:focus { border-color: var(--accent); }
+
+    /* ========== 按钮 ========== */
+    .btn-test {
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      background: #21262d;
+      color: #c9d1d9;
+      font-size: 13px;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-test:hover { background: #30363d; border-color: #8b949e; }
+    .btn-test.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-test.primary:hover { background: #e04a3a; }
+    .btn-test.danger { border-color: #f85149; color: #f85149; }
+    .btn-test.danger:hover { background: rgba(248,81,73,0.1); }
+    .btn-test:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ========== 状态面板 ========== */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .stat-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: 'Menlo', 'Consolas', monospace;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label { font-size: 12px; color: #8b949e; }
+    .stat-value.green { color: #3fb950; }
+    .stat-value.red { color: #f85149; }
+    .stat-value.yellow { color: #d29922; }
+    .stat-value.blue { color: #58a6ff; }
+
+    /* ========== 日志 ========== */
+    .log-area {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Menlo', 'Consolas', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .log-area::-webkit-scrollbar { width: 4px; }
+    .log-area::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+    .log-entry { display: flex; gap: 8px; }
+    .log-time { color: #484f58; flex-shrink: 0; }
+    .log-ok { color: #3fb950; }
+    .log-fail { color: #f85149; }
+    .log-info { color: #58a6ff; }
+    .log-warn { color: #d29922; }
+
+    /* ========== 进度条 ========== */
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #21262d;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    @media (max-width: 600px) {
+      .form-row { flex-direction: column; }
+      .form-group input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<div class="test-wrap">
+  <h1>⚡ 秒杀<span>压测面板</span></h1>
+  <div class="subtitle">初始化库存 → 发起并发秒杀 → 实时观察库存消耗和订单生成</div>
+
+  <!-- 1. 初始化 -->
+  <div class="panel">
+    <div class="panel-title"><i class="bi bi-gear"></i> 初始化</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>电影 ID</label>
+        <input type="number" id="movieId" value="1" min="1">
+      </div>
+      <div class="form-group">
+        <label>库存数量</label>
+        <input type="number" id="stock" value="50" min="1">
+      </div>
+      <button class="btn-test primary" onclick="initStock()">初始化库存</button>
+      <button class="btn-test" onclick="refreshStock()">刷新库存</button>
+    </div>
+    <div class="form-row" style="margin-top:8px;">
+      <div class="form-group">
+        <label>创建测试用户数</label>
+        <input type="number" id="userCount" value="200" min="1" max="10000">
+      </div>
+      <button class="btn-test" onclick="createUsers()">创建测试用户</button>
+      <span style="font-size:12px;color:#8b949e;align-self:center;">ID 从 900001 开始，密码 123456</span>
+    </div>
+  </div>
+
+  <!-- 2. 实时状态 -->
+  <div class="panel">
+    <div class="panel-title"><i class="bi bi-activity"></i> 实时状态 <span id="autoLabel" style="font-size:11px;color:#484f58;margin-left:auto;">自动刷新已关闭</span></div>
+    <div class="status-grid">
+      <div class="stat-card">
+        <div class="stat-value blue" id="sStock">-</div>
+        <div class="stat-label">剩余库存</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value green" id="sOrders">-</div>
+        <div class="stat-label">秒杀订单</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value yellow" id="sPaid">-</div>
+        <div class="stat-label">已支付</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value red" id="sSent">-</div>
+        <div class="stat-label">已发送请求</div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  </div>
+
+  <!-- 3. 发起秒杀 -->
+  <div class="panel">
+    <div class="panel-title"><i class="bi bi-lightning"></i> 发起秒杀</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>用户 ID 起始</label>
+        <input type="number" id="userIdStart" value="900001" min="1">
+      </div>
+      <div class="form-group">
+        <label>并发数</label>
+        <input type="number" id="concurrency" value="20" min="1" max="500">
+      </div>
+      <div class="form-group">
+        <label>每批间隔 (ms)</label>
+        <input type="number" id="interval" value="50" min="0" max="5000">
+      </div>
+      <button class="btn-test primary" id="startBtn" onclick="startSeckill()">🚀 开始秒杀</button>
+      <button class="btn-test" id="autoBtn" onclick="toggleAutoRefresh()">自动刷新</button>
+    </div>
+  </div>
+
+  <!-- 4. 全链路测试 -->
+  <div class="panel">
+    <div class="panel-title"><i class="bi bi-credit-card"></i> 全链路测试（走支付）</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>充值金额 (每人)</label>
+        <input type="number" id="rechargeAmount" value="1000" min="1">
+      </div>
+      <button class="btn-test" onclick="batchRecharge()">💰 批量充值</button>
+      <button class="btn-test primary" onclick="batchPay()">💳 一键批量支付</button>
+    </div>
+    <div style="font-size:12px;color:#8b949e;margin-top:8px;">
+      流程：创建测试用户 → 批量充值 → 秒杀 → 一键支付 → 验证资产表
+    </div>
+  </div>
+
+  <!-- 5. 操作 -->
+  <div class="panel">
+    <div class="panel-title"><i class="bi bi-tools"></i> 操作</div>
+    <div class="form-row">
+      <button class="btn-test" onclick="refreshResult()">查询结果</button>
+      <button class="btn-test danger" onclick="cleanup()">清理测试数据</button>
+      <button class="btn-test" onclick="clearLog()">清空日志</button>
+    </div>
+  </div>
+
+  <!-- 5. 日志 -->
+  <div class="panel">
+    <div class="panel-title"><i class="bi bi-terminal"></i> 日志</div>
+    <div class="log-area" id="logArea"></div>
+  </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  var sentCount = 0;
+  var autoTimer = null;
+  var isRunning = false;
+
+  function getMovieId() { return document.getElementById('movieId').value; }
+
+  function log(type, msg) {
+    var area = document.getElementById('logArea');
+    var time = new Date().toLocaleTimeString('zh-CN', {hour12:false});
+    var cls = {ok:'log-ok', fail:'log-fail', info:'log-info', warn:'log-warn'}[type] || 'log-info';
+    var div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML = '<span class="log-time">' + time + '</span><span class="' + cls + '">' + msg + '</span>';
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function clearLog() {
+    document.getElementById('logArea').innerHTML = '';
+  }
+
+  // ========== 创建测试用户 ==========
+  function createUsers() {
+    var count = document.getElementById('userCount').value;
+    log('info', '创建测试用户: count=' + count);
+    fetch('/test/seckill/createUsers?count=' + count, { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.success) {
+          log('ok', '✅ 创建完成: 成功 ' + d.data.created + ' 个, ID=' + d.data.startId + '~' + d.data.endId);
+          if (d.data.lastError) {
+            log('warn', '⚠️ 最后一个错误: ' + d.data.lastError);
+          }
+        } else {
+          log('fail', '❌ ' + d.msg);
+        }
+      })
+      .catch(function(e) { log('fail', '❌ ' + e.message); });
+  }
+
+  // ========== 初始化库存 ==========
+  function initStock() {
+    var movieId = getMovieId();
+    var stock = document.getElementById('stock').value;
+    log('info', '初始化库存: movieId=' + movieId + ', stock=' + stock);
+
+    fetch('/test/seckill/init?movieId=' + movieId + '&stock=' + stock, { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.success) {
+          log('ok', '✅ 库存初始化成功: ' + stock);
+          refreshStock();
+        } else {
+          log('fail', '❌ ' + d.msg);
+        }
+      })
+      .catch(function(e) { log('fail', '❌ 请求失败: ' + e.message); });
+  }
+
+  // ========== 刷新库存 ==========
+  function refreshStock() {
+    var movieId = getMovieId();
+    fetch('/test/seckill/stock?movieId=' + movieId)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.success) {
+          document.getElementById('sStock').textContent = d.data.stock;
+        }
+      });
+  }
+
+  // ========== 查询结果 ==========
+  function refreshResult() {
+    var movieId = getMovieId();
+    fetch('/test/seckill/result?movieId=' + movieId)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.success) {
+          document.getElementById('sStock').textContent = d.data.remainingStock;
+          document.getElementById('sOrders').textContent = d.data.totalOrders;
+          document.getElementById('sPaid').textContent = d.data.paidOrders;
+          document.getElementById('sSent').textContent = sentCount;
+          // 进度条 = 已消耗库存 / 初始库存
+          var initStock = parseInt(document.getElementById('stock').value);
+          var consumed = initStock - d.data.remainingStock;
+          var pct = Math.min(100, Math.round(consumed / initStock * 100));
+          document.getElementById('progress').style.width = pct + '%';
+        }
+      });
+  }
+
+  // ========== 自动刷新 ==========
+  function toggleAutoRefresh() {
+    var btn = document.getElementById('autoBtn');
+    var label = document.getElementById('autoLabel');
+    if (autoTimer) {
+      clearInterval(autoTimer);
+      autoTimer = null;
+      btn.textContent = '自动刷新';
+      label.textContent = '自动刷新已关闭';
+      log('info', '自动刷新已关闭');
+    } else {
+      autoTimer = setInterval(refreshResult, 1000);
+      btn.textContent = '停止刷新';
+      label.textContent = '每秒刷新中...';
+      log('info', '自动刷新已开启 (1s)');
+    }
+  }
+
+  // ========== 开始秒杀 ==========
+  function startSeckill() {
+    if (isRunning) return;
+    isRunning = true;
+    sentCount = 0;
+
+    var movieId = getMovieId();
+    var startId = parseInt(document.getElementById('userIdStart').value);
+    var total = parseInt(document.getElementById('concurrency').value);
+    var interval = parseInt(document.getElementById('interval').value);
+    var btn = document.getElementById('startBtn');
+    btn.disabled = true;
+    btn.textContent = '执行中...';
+
+    log('info', '🚀 开始秒杀: 并发=' + total + ', userId=' + startId + '~' + (startId + total - 1));
+    if (!autoTimer) toggleAutoRefresh();
+
+    var i = 0;
+    function sendNext() {
+      if (i >= total) {
+        isRunning = false;
+        btn.disabled = false;
+        btn.textContent = '🚀 开始秒杀';
+        log('info', '✅ 全部请求已发送，共 ' + sentCount + ' 个');
+        setTimeout(refreshResult, 2000);
+        return;
+      }
+      var userId = startId + i;
+      i++;
+      sentCount++;
+      document.getElementById('sSent').textContent = sentCount;
+
+      fetch('/test/seckill/do?userId=' + userId + '&movieId=' + movieId, { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.success) {
+            log('ok', '✅ userId=' + userId + ' ' + (d.data ? d.data.mode : ''));
+          } else {
+            log('fail', '❌ userId=' + userId + ' ' + d.msg);
+          }
+        })
+        .catch(function(e) {
+          log('fail', '❌ userId=' + userId + ' ' + e.message);
+        });
+
+      setTimeout(sendNext, interval);
+    }
+    sendNext();
+  }
+
+  // ========== 批量充值 ==========
+  function batchRecharge() {
+    var startId = document.getElementById('userIdStart').value;
+    var count = document.getElementById('userCount').value;
+    var amount = document.getElementById('rechargeAmount').value;
+    log('info', '💰 批量充值: userId ' + startId + '~' + (parseInt(startId) + parseInt(count) - 1) + ', 每人 ¥' + amount);
+    fetch('/test/seckill/batchRecharge?startId=' + startId + '&count=' + count + '&amount=' + amount, { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.success) {
+          log('ok', '✅ 充值完成: 成功 ' + d.data.success + ' 人, 失败 ' + d.data.failed + ' 人');
+        } else {
+          log('fail', '❌ ' + d.msg);
+        }
+      })
+      .catch(function(e) { log('fail', '❌ ' + e.message); });
+  }
+
+  // ========== 一键批量支付 ==========
+  function batchPay() {
+    var movieId = getMovieId();
+    log('info', '💳 批量支付秒杀订单: movieId=' + movieId);
+    fetch('/test/seckill/batchPay?movieId=' + movieId, { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.success) {
+          log('ok', '✅ 支付完成: 总计 ' + d.data.total + ', 成功 ' + d.data.paid + ', 失败 ' + d.data.failed);
+          refreshResult();
+        } else {
+          log('fail', '❌ ' + d.msg);
+        }
+      })
+      .catch(function(e) { log('fail', '❌ ' + e.message); });
+  }
+
+  // ========== 清理 ==========
+  function cleanup() {
+    if (!confirm('确认清理所有测试数据？')) return;
+    var movieId = getMovieId();
+    log('warn', '清理测试数据: movieId=' + movieId);
+
+    fetch('/test/seckill/cleanup?movieId=' + movieId, { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.success) {
+          log('ok', '✅ 清理完成');
+          sentCount = 0;
+          refreshResult();
+        } else {
+          log('fail', '❌ ' + d.msg);
+        }
+      });
+  }
+
+  // 页面加载
+  document.addEventListener('DOMContentLoaded', function() {
+    refreshResult();
+  });
+</script>
+</body>
+</html>

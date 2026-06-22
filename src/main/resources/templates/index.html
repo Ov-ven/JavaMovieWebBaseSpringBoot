@@ -20,13 +20,19 @@
 <!-- 轮播图 - 热播电影 -->
 <section class="section" style="padding-top: 0;">
 	<div class="container">
-		<div id="hotCarousel" class="carousel slide" data-bs-ride="carousel">
+		<div id="hotCarousel" class="carousel slide" data-bs-ride="carousel" style="position: relative;">
 			<div class="carousel-inner" style="border-radius: var(--radius-lg); overflow: hidden;">
 				<div th:each="movie, iter : ${hotMovies}"
 					 th:class="${iter.index == 0} ? 'carousel-item active' : 'carousel-item'">
 					<div th:style="'background-image: url(\'/image/' + ${movie.cover} + '\'); height: 460px; background-size: cover; background-position: center; position: relative;'">
 						<div class="d-none d-md-block position-absolute bottom-0 start-0 w-100"
 							 style="background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 40px 32px;">
+							<!-- 秒杀标签 -->
+							<span th:if="${movie.seckillPrice != null}"
+								  style="display:inline-block;background:#e74c3c;color:#fff;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;margin-bottom:8px;">
+								⚡ 限时秒杀 ¥[[${movie.seckillPrice}]]
+								<span style="text-decoration:line-through;opacity:0.7;margin-left:4px;">¥[[${movie.price}]]</span>
+							</span>
 							<h2 th:text="${movie.title}"
 								style="color: #fff; font-family: var(--font-display); font-size: 2rem; font-weight: 700; margin-bottom: 8px;">电影标题</h2>
 							<p th:text="${movie.description}"
@@ -36,15 +42,15 @@
 					</div>
 				</div>
 			</div>
-			<!-- 轮播控件 -->
-			<button class="carousel-control-prev" type="button" data-bs-target="#hotCarousel" data-bs-slide="prev">
-				<span class="carousel-control-prev-icon" aria-hidden="true"></span>
-				<span class="visually-hidden">Previous</span>
-			</button>
-			<button class="carousel-control-next" type="button" data-bs-target="#hotCarousel" data-bs-slide="next">
-				<span class="carousel-control-next-icon" aria-hidden="true"></span>
-				<span class="visually-hidden">Next</span>
-			</button>
+			<!-- 轮播控件（自定义，不遮挡内容） -->
+			<div class="carousel-nav">
+				<div role="button" tabindex="0" data-bs-target="#hotCarousel" data-bs-slide="prev" aria-label="上一张">
+					<i class="bi bi-chevron-left"></i>
+				</div>
+				<div role="button" tabindex="0" data-bs-target="#hotCarousel" data-bs-slide="next" aria-label="下一张">
+					<i class="bi bi-chevron-right"></i>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>
@@ -142,7 +148,10 @@
 						<div class="movie-cover-wrap">
 							<img class="movie-cover" th:src="@{'/image/'+${movie.cover}}" alt="电影封面">
 							<span th:if="${movie.isVip == 1}" class="movie-badge badge-vip">VIP</span>
-							<span th:if="${movie.price != null and movie.price > 0}" class="movie-badge badge-price"
+							<span th:if="${movie.seckillPrice != null}" class="movie-badge" style="background:#e74c3c;color:#fff;bottom:auto;top:8px;left:8px;right:auto;">⚡秒杀</span>
+							<span th:if="${movie.seckillPrice != null}" class="movie-badge badge-price"
+								  th:text="'¥' + ${#numbers.formatDecimal(movie.seckillPrice, 1, 2)}"></span>
+							<span th:if="${movie.seckillPrice == null and movie.price != null and movie.price > 0}" class="movie-badge badge-price"
 								  th:text="'¥' + ${#numbers.formatDecimal(movie.price, 1, 2)}"></span>
 							<div th:if="${movie.score != null}" class="movie-score">
 								<i class="bi bi-star-fill"></i>
@@ -187,13 +196,13 @@
 			<ul class="pagination justify-content-center" style="gap: 4px;">
 				<li class="page-item" th:classappend="${currentPage == 1} ? 'disabled' : ''">
 					<a class="page-link"
-					   th:href="@{/(page=1, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
+					   th:href="@{/(pageNum=1, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
 						首页
 					</a>
 				</li>
 				<li class="page-item" th:classappend="${currentPage == 1} ? 'disabled' : ''">
 					<a class="page-link"
-					   th:href="@{/(page=${prevPage}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
+					   th:href="@{/(pageNum=${prevPage}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
 						上一页
 					</a>
 				</li>
@@ -202,19 +211,19 @@
 				<li th:each="pageNum : ${#numbers.sequence(1, moviePage.pages)}"
 					th:classappend="${pageNum == currentPage} ? 'active' : ''" class="page-item">
 					<a class="page-link"
-					   th:href="@{/(page=${pageNum}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}"
+					   th:href="@{/(pageNum=${pageNum}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}"
 					   th:text="${pageNum}"></a>
 				</li>
 
 				<li class="page-item" th:classappend="${currentPage == moviePage.pages} ? 'disabled' : ''">
 					<a class="page-link"
-					   th:href="@{/(page=${nextPage}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
+					   th:href="@{/(pageNum=${nextPage}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
 						下一页
 					</a>
 				</li>
 				<li class="page-item" th:classappend="${currentPage == moviePage.pages} ? 'disabled' : ''">
 					<a class="page-link"
-					   th:href="@{/(page=${moviePage.pages}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
+					   th:href="@{/(pageNum=${moviePage.pages}, type=${queryType}, region=${queryRegion}, keyword=${queryKeyword}, sort=${querySort})}">
 						尾页
 					</a>
 				</li>

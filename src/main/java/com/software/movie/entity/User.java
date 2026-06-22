@@ -1,6 +1,7 @@
 package com.software.movie.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.Date;
@@ -17,7 +18,8 @@ public class User {
     private Long id;
     /** 用户名 */
     private String username;
-    /** 密码（加密存储） */
+    /** 密码（加密存储，仅接受输入，不返回给前端） */
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     /** 邮箱 */
     private String email;

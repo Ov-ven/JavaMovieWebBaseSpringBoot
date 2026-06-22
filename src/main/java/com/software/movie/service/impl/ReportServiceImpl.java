@@ -79,7 +79,7 @@ public class ReportServiceImpl implements ReportService {
                 if (movie.getReleaseDate() != null) {
                     CellStyle dateCellStyle = workbook.createCellStyle();
                     CreationHelper createHelper = workbook.getCreationHelper();
-                    dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("yyyy-mm-dd"));
+                    dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("yyyy-MM-dd"));
 
                     dateCell.setCellValue(movie.getReleaseDate());
                     dateCell.setCellStyle(dateCellStyle);

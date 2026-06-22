@@ -247,6 +247,16 @@
                             <span v-else style="color: #27ae60;">免费</span>
                         </template>
                     </el-table-column>
+                    <el-table-column label="秒杀" width="140">
+                        <template slot-scope="scope">
+                            <div v-if="scope.row.seckillPrice && scope.row.seckillStock != null">
+                                <span style="color: #e74c3c; font-weight: 600;">¥{{ scope.row.seckillPrice }}</span>
+                                <span style="color: #999; font-size: 11px; text-decoration: line-through; margin-left: 4px;">¥{{ scope.row.price }}</span>
+                                <br><span style="font-size: 11px; color: #8b949e;">库存: {{ scope.row.seckillStock }}</span>
+                            </div>
+                            <span v-else style="color: #ccc;">-</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column label="VIP" width="70" align="center">
                         <template slot-scope="scope">
                             <span v-if="scope.row.isVip === 1" class="vip-tag">VIP</span>
@@ -260,11 +270,13 @@
                             </span>
                         </template>
                     </el-table-column>
-                    <el-table-column label="操作" width="160" fixed="right">
+                    <el-table-column label="操作" width="220" fixed="right">
                         <template slot-scope="scope">
                             <div class="action-btns">
                                 <el-button size="mini" type="primary" plain
                                     @click="openDialog(scope.row)">编辑</el-button>
+                                <el-button size="mini" type="warning" plain
+                                    @click="openSeckillDialog(scope.row)">秒杀</el-button>
                                 <el-button size="mini" type="danger" plain
                                     @click="confirmDelete(scope.row)">删除</el-button>
                             </div>
@@ -309,17 +321,17 @@
                 <el-row :gutter="16">
                     <el-col :span="8">
                         <el-form-item label="评分">
-                            <el-input-number v-model="form.score" :min="0" :max="10" :step="0.1" :precision="1" style="width: 100%;"></el-input-number>
+                            <el-input v-model.number="form.score" type="number" :min="0" :max="10" step="0.1" placeholder="0-10"></el-input>
                         </el-form-item>
                     </el-col>
                     <el-col :span="8">
                         <el-form-item label="价格">
-                            <el-input-number v-model="form.price" :min="0" :step="1" :precision="2" style="width: 100%;"></el-input-number>
+                            <el-input v-model.number="form.price" type="number" :min="0" step="0.01" placeholder="元"></el-input>
                         </el-form-item>
                     </el-col>
                     <el-col :span="8">
                         <el-form-item label="时长">
-                            <el-input-number v-model="form.duration" :min="0" :step="1" style="width: 100%;"></el-input-number>
+                            <el-input v-model.number="form.duration" type="number" :min="0" step="1" placeholder="分钟"></el-input>
                         </el-form-item>
                     </el-col>
                 </el-row>
@@ -358,6 +370,37 @@
             </div>
         </el-dialog>
 
+        <!-- 上架秒杀对话框 -->
+        <el-dialog title="上架秒杀" :visible.sync="seckillDialogVisible" width="450px" :close-on-click-modal="false">
+            <div style="margin-bottom: 16px; padding: 12px; background: #fef9e7; border-radius: 8px; font-size: 13px; color: #856404;">
+                📌 设置秒杀价和库存后，会自动写入 Redis。用户秒杀时扣 Redis 库存，支付成功后生成订单。
+            </div>
+            <el-form :model="seckillForm" label-width="80px" label-position="left">
+                <el-form-item label="电影">
+                    <el-input :value="seckillForm.title" disabled></el-input>
+                </el-form-item>
+                <el-form-item label="原价">
+                    <el-input :value="'¥' + (seckillForm.price || 0)" disabled></el-input>
+                </el-form-item>
+                <el-form-item label="秒杀价" required>
+                    <el-input v-model.number="seckillForm.seckillPrice" type="number" :min="0.01" :step="0.01" placeholder="折扣价">
+                        <template slot="prepend">¥</template>
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="库存" required>
+                    <el-input v-model.number="seckillForm.seckillStock" type="number" :min="1" :step="1" placeholder="秒份数量">
+                        <template slot="append">件</template>
+                    </el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer">
+                <el-button @click="seckillDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="submitSeckill" :loading="seckillSubmitting">
+                    确认上架
+                </el-button>
+            </div>
+        </el-dialog>
+
         <!-- MQ 状态指示器 -->
         <div class="mq-indicator">
             <span class="dot" :class="mqStatus"></span>
@@ -384,6 +427,9 @@
                     isEdit: false,
                     submitting: false,
                     mqStatus: 'idle',
+                    seckillDialogVisible: false,
+                    seckillSubmitting: false,
+                    seckillForm: { movieId: null, title: '', price: 0, seckillPrice: null, seckillStock: null },
                     form: {
                         id: null,
                         title: '',
@@ -535,6 +581,51 @@
                         }
                     } catch (e) {
                         this.$message.error('网络错误: ' + e.message);
+                    }
+                },
+
+                // ========== 打开秒杀对话框 ==========
+                openSeckillDialog(row) {
+                    this.seckillForm = {
+                        movieId: row.id,
+                        title: row.title,
+                        price: row.price || 0,
+                        seckillPrice: row.seckillPrice || null,
+                        seckillStock: row.seckillStock || null
+                    };
+                    this.seckillDialogVisible = true;
+                },
+
+                // ========== 提交秒杀上架 ==========
+                async submitSeckill() {
+                    if (!this.seckillForm.seckillPrice || this.seckillForm.seckillPrice <= 0) {
+                        this.$message.warning('请输入有效的秒杀价');
+                        return;
+                    }
+                    if (!this.seckillForm.seckillStock || this.seckillForm.seckillStock <= 0) {
+                        this.$message.warning('请输入有效的库存数量');
+                        return;
+                    }
+                    this.seckillSubmitting = true;
+                    try {
+                        const params = new URLSearchParams({
+                            movieId: this.seckillForm.movieId,
+                            seckillPrice: this.seckillForm.seckillPrice,
+                            seckillStock: this.seckillForm.seckillStock
+                        });
+                        const res = await fetch('/admin/movie/seckill?' + params, { method: 'POST' });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.$message.success('秒杀上架成功，Redis 库存已初始化');
+                            this.seckillDialogVisible = false;
+                            this.loadMovies();
+                        } else {
+                            this.$message.error(data.msg || '上架失败');
+                        }
+                    } catch (e) {
+                        this.$message.error('网络错误: ' + e.message);
+                    } finally {
+                        this.seckillSubmitting = false;
                     }
                 }
             }

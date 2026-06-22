@@ -58,12 +58,14 @@ public class SecKillOrderConsumer implements RocketMQListener<String> {
             return;
         }
 
-        // 构建秒杀订单并落库
+        // 构建秒杀订单并落库（使用秒杀价，没有秒杀价则用原价）
+        double price = (movie.getSeckillPrice() != null && movie.getSeckillPrice() > 0)
+                ? movie.getSeckillPrice() : movie.getPrice();
         Order order = new Order();
         order.setOrderNo(UUID.randomUUID().toString().replace("-", ""));
         order.setUserId(userId);
         order.setMovieId(movieId);
-        order.setAmount(movie.getPrice());
+        order.setAmount(price);
         order.setOrderType(3);   // 秒杀订单
         order.setStatus(0);      // 待支付
         orderMapper.insert(order);

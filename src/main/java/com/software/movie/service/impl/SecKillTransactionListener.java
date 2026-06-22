@@ -12,7 +12,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.messaging.Message;
 
-import java.util.Collections;
+import java.util.Arrays;
 
 /**
  * 秒杀事务监听器。
@@ -26,6 +26,7 @@ public class SecKillTransactionListener implements RocketMQLocalTransactionListe
     private static final Logger log = LoggerFactory.getLogger(SecKillTransactionListener.class);
 
     private static final String STOCK_KEY_PREFIX = "seckill:stock:movie:";
+    private static final String STOCK_PREFIX = "seckill:";
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -51,16 +52,23 @@ public class SecKillTransactionListener implements RocketMQLocalTransactionListe
         Long userId = payload.getUserId();
 
         String stockKey = STOCK_KEY_PREFIX + movieId;
+        String userSetKey = STOCK_PREFIX + "users:movie:" + movieId;
 
         try {
             Long result = stringRedisTemplate.execute(
                     seckillScript,
-                    Collections.singletonList(stockKey)
+                    Arrays.asList(stockKey, userSetKey),
+                    userId.toString()
             );
 
             if (result != null && result == 1) {
                 log.info("本地事务执行成功：用户 {} 抢购电影 {}，库存已扣减，COMMIT 消息", userId, movieId);
                 return RocketMQLocalTransactionState.COMMIT;
+            }
+
+            if (result != null && result == 2) {
+                log.info("本地事务执行：用户 {} 抢购电影 {}，重复请求，ROLLBACK 消息", userId, movieId);
+                return RocketMQLocalTransactionState.ROLLBACK;
             }
 
             log.info("本地事务执行失败：用户 {} 抢购电影 {}，库存不足，ROLLBACK 消息", userId, movieId);
@@ -73,14 +81,35 @@ public class SecKillTransactionListener implements RocketMQLocalTransactionListe
 
     /**
      * 兜底回查：当 Broker 未收到 COMMIT/ROLLBACK 时，定时回调此方法。
-     * 当前实现无法精确判断（Redis 无扣减记录的用户维度标记），返回 UNKNOWN 等待重试。
+     * <p>通过检查 Redis 中的用户集合判断库存是否已扣减：
+     * - 用户在集合中 → 已扣减 → COMMIT
+     * - 用户不在集合中 → 未扣减 → ROLLBACK</p>
      *
      * @param msg RocketMQ 消息
-     * @return 始终返回 UNKNOWN，等待 Broker 自动重试或人工介入
+     * @return COMMIT（已扣减）或 ROLLBACK（未扣减）
      */
     @Override
     public RocketMQLocalTransactionState checkLocalTransaction(Message msg) {
-        log.warn("事务回查触发，默认返回 UNKNOWN，消息: {}", new String((byte[]) msg.getPayload()));
-        return RocketMQLocalTransactionState.UNKNOWN;
+        SecKillServiceImpl.SecKillMessage payload = JSON.parseObject(
+                new String((byte[]) msg.getPayload()),
+                SecKillServiceImpl.SecKillMessage.class
+        );
+        Long movieId = payload.getMovieId();
+        Long userId = payload.getUserId();
+
+        String userSetKey = STOCK_PREFIX + "users:movie:" + movieId;
+
+        try {
+            Boolean isMember = stringRedisTemplate.opsForSet().isMember(userSetKey, userId.toString());
+            if (Boolean.TRUE.equals(isMember)) {
+                log.info("事务回查：用户 {} 电影 {} 已扣减库存，返回 COMMIT", userId, movieId);
+                return RocketMQLocalTransactionState.COMMIT;
+            }
+            log.info("事务回查：用户 {} 电影 {} 未扣减库存，返回 ROLLBACK", userId, movieId);
+            return RocketMQLocalTransactionState.ROLLBACK;
+        } catch (Exception e) {
+            log.error("事务回查异常：用户 {} 电影 {}，返回 UNKNOWN", userId, movieId, e);
+            return RocketMQLocalTransactionState.UNKNOWN;
+        }
     }
 }

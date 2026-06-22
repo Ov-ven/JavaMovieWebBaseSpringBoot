@@ -8,6 +8,7 @@ import com.software.movie.entity.dto.PaymentRequest;
 import com.software.movie.service.AlipayService;
 import com.software.movie.service.OrderService;
 import com.software.movie.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

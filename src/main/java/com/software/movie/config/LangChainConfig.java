@@ -26,20 +26,14 @@ public class LangChainConfig {
 
     private static final Logger log = LoggerFactory.getLogger(LangChainConfig.class);
 
-    @Value("${llm.xiaomi.base-url}")
+    @Value("${llm.base-url}")
     private String baseUrl;
 
-    @Value("${llm.xiaomi.api-key}")
+    @Value("${llm.api-key}")
     private String apiKey;
 
-    @Value("${llm.xiaomi.model-name}")
-    private String modelName;
-
-    @Value("${llm.embedding.base-url}")
-    private String embeddingBaseUrl;
-
-    @Value("${llm.embedding.api-key}")
-    private String embeddingApiKey;
+    @Value("${llm.chat.model-name}")
+    private String chatModelName;
 
     @Value("${llm.embedding.model-name}")
     private String embeddingModelName;
@@ -47,13 +41,13 @@ public class LangChainConfig {
     @Bean
     public OpenAiChatModel openAiChatModel() {
         if (!StringUtils.hasText(apiKey)) {
-            log.warn("MIMO_API_KEY 未配置，跳过 OpenAiChatModel 创建");
+            log.warn("LLM_API_KEY 未配置，跳过 OpenAiChatModel 创建");
             return null;
         }
         return OpenAiChatModel.builder()
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
-                .modelName(modelName)
+                .modelName(chatModelName)
                 .tokenizer(new OpenAiTokenizer("gpt-3.5-turbo"))
                 .build();
     }
@@ -61,13 +55,13 @@ public class LangChainConfig {
     @Bean
     public OpenAiStreamingChatModel openAiStreamingChatModel() {
         if (!StringUtils.hasText(apiKey)) {
-            log.warn("MIMO_API_KEY 未配置，跳过 OpenAiStreamingChatModel 创建");
+            log.warn("LLM_API_KEY 未配置，跳过 OpenAiStreamingChatModel 创建");
             return null;
         }
         return OpenAiStreamingChatModel.builder()
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
-                .modelName(modelName)
+                .modelName(chatModelName)
                 .tokenizer(new OpenAiTokenizer("gpt-3.5-turbo"))
                 .build();
     }
@@ -89,13 +83,13 @@ public class LangChainConfig {
      */
     @Bean
     public EmbeddingModel embeddingModel() {
-        if (!StringUtils.hasText(embeddingApiKey)) {
-            log.warn("Llm_Embedding_Apikey 未配置，跳过 EmbeddingModel 创建");
+        if (!StringUtils.hasText(apiKey)) {
+            log.warn("LLM_API_KEY 未配置，跳过 EmbeddingModel 创建");
             return null;
         }
         return OpenAiEmbeddingModel.builder()
-                .baseUrl(embeddingBaseUrl)
-                .apiKey(embeddingApiKey)
+                .baseUrl(baseUrl)
+                .apiKey(apiKey)
                 .modelName(embeddingModelName)
                 .build();
     }
@@ -107,8 +101,8 @@ public class LangChainConfig {
      */
     @Bean
     public EmbeddingStore<TextSegment> embeddingStore() {
-        if (!StringUtils.hasText(embeddingApiKey)) {
-            log.warn("Llm_Embedding_Apikey 未配置，跳过 EmbeddingStore 创建");
+        if (!StringUtils.hasText(apiKey)) {
+            log.warn("LLM_API_KEY 未配置，跳过 EmbeddingStore 创建");
             return null;
         }
         try {

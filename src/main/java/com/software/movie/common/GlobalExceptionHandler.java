@@ -3,6 +3,8 @@ package com.software.movie.common;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -31,8 +33,9 @@ public class GlobalExceptionHandler {
      * @return 包含 UNAUTHORIZED 状态码的 Result
      */
     @ExceptionHandler(NotLoginException.class)
-    public Result handleNotLoginException(NotLoginException e) {
-        return Result.error(ResultCode.UNAUTHORIZED, e.getMessage());
+    public ResponseEntity<Result> handleNotLoginException(NotLoginException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Result.error(ResultCode.UNAUTHORIZED, e.getMessage()));
     }
 
     /**
@@ -42,8 +45,9 @@ public class GlobalExceptionHandler {
      * @return 包含 BAD_REQUEST 状态码的 Result
      */
     @ExceptionHandler(BusinessException.class)
-    public Result handleBusinessException(BusinessException e) {
-        return Result.error(ResultCode.BAD_REQUEST, e.getMessage());
+    public ResponseEntity<Result> handleBusinessException(BusinessException e) {
+        return ResponseEntity.badRequest()
+                .body(Result.error(ResultCode.BAD_REQUEST, e.getMessage()));
     }
 
     /**
@@ -54,9 +58,10 @@ public class GlobalExceptionHandler {
      * @return 包含 DUPLICATE_ACTION 状态码的 Result
      */
     @ExceptionHandler(DuplicateKeyException.class)
-    public Result handleDuplicateKeyException(DuplicateKeyException e) {
+    public ResponseEntity<Result> handleDuplicateKeyException(DuplicateKeyException e) {
         log.warn("数据库唯一索引冲突：{}", e.getMessage());
-        return Result.error(ResultCode.DUPLICATE_ACTION);
+        return ResponseEntity.badRequest()
+                .body(Result.error(ResultCode.DUPLICATE_ACTION));
     }
 
     /**
@@ -67,8 +72,9 @@ public class GlobalExceptionHandler {
      * @return 包含 SYSTEM_ERROR 状态码的 Result
      */
     @ExceptionHandler(RuntimeException.class)
-    public Result handleRuntimeException(RuntimeException e) {
+    public ResponseEntity<Result> handleRuntimeException(RuntimeException e) {
         log.error("系统异常：", e);
-        return Result.error(ResultCode.SYSTEM_ERROR);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Result.error(ResultCode.SYSTEM_ERROR));
     }
 }

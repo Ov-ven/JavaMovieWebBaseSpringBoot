@@ -61,7 +61,7 @@ public class ChatController {
     public Result chat(@RequestBody ChatRequest request) {
         User user = UserContext.getUser();
         if (user == null) return Result.error("请先登录");
-        if (streamingChatModel == null) return Result.error("AI 服务未配置，请设置 MIMO_API_KEY 环境变量");
+        if (streamingChatModel == null) return Result.error("AI 服务未配置，请设置 LLM_API_KEY 环境变量");
 
         if (request.getMessage() == null || request.getMessage().trim().isEmpty()) {
             return Result.error("消息不能为空");
@@ -90,7 +90,7 @@ public class ChatController {
         }
         if (streamingChatModel == null) {
             SseEmitter emitter = new SseEmitter();
-            emitter.completeWithError(new RuntimeException("AI 服务未配置，请设置 MIMO_API_KEY 环境变量"));
+            emitter.completeWithError(new RuntimeException("AI 服务未配置，请设置 LLM_API_KEY 环境变量"));
             return emitter;
         }
 

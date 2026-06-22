@@ -213,8 +213,9 @@ public class MovieAgentTools {
      */
     @Tool("当用户询问自己是否是VIP、VIP什么时候到期、会员状态时，调用此工具。无需传参。")
     public String checkVipStatus() {
-        User user = userService.getById(userId);
-        if (user.getIsvip() == 1) {
+        boolean isVip = userService.isVip(userId);
+        if (isVip) {
+            User user = userService.getById(userId);
             String expireStr = user.getVipExpireTime() != null
                     ? new java.text.SimpleDateFormat("yyyy-MM-dd").format(user.getVipExpireTime())
                     : "未知";

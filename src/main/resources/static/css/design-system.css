@@ -132,6 +132,44 @@ body {
 }
 .btn-ghost:hover { border-color: var(--text-secondary); }
 
+/* ========== 轮播图自定义控件 ========== */
+/* 隐藏 Bootstrap 默认控件 */
+.carousel-control-prev,
+.carousel-control-next {
+  display: none !important;
+}
+/* 自定义控件容器 */
+.carousel { position: relative; }
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 12px;
+  pointer-events: none;
+  z-index: 5;
+}
+.carousel-nav [role="button"] {
+  pointer-events: auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s, background 0.2s;
+}
+.carousel:hover .carousel-nav [role="button"] { opacity: 0.8; }
+.carousel-nav [role="button"]:hover { opacity: 1 !important; background: rgba(0,0,0,0.65); }
+
 /* ========== 卡片 ========== */
 .card-ed {
   background: var(--bg-card);

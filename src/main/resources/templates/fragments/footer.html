@@ -1,16 +1,23 @@
 <footer th:fragment="footer" class="footer-ed">
   <div class="container">
     <div class="row" style="text-align:left;max-width:800px;margin:0 auto;">
-      <div class="col-md-6 mb-3">
+      <div class="col-md-4 mb-3">
         <h6 style="font-family:var(--font-display);font-weight:700;margin-bottom:8px;">关于我们</h6>
         <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;">提供最新最热的电影资源，打造最佳观影体验。</p>
       </div>
-      <div class="col-md-6 mb-3">
+      <div class="col-md-4 mb-3">
         <h6 style="font-family:var(--font-display);font-weight:700;margin-bottom:8px;">联系我们</h6>
         <ul style="list-style:none;padding:0;font-size:14px;color:var(--text-secondary);line-height:2;">
           <li><i class="bi bi-envelope me-2"></i> owen45467@gmail.com</li>
           <li><i class="bi bi-telephone me-2"></i> 10086</li>
           <li><i class="bi bi-geo-alt me-2"></i> 华南师范大学南海校区</li>
+        </ul>
+      </div>
+      <div class="col-md-4 mb-3">
+        <h6 style="font-family:var(--font-display);font-weight:700;margin-bottom:8px;">管理入口</h6>
+        <ul style="list-style:none;padding:0;font-size:14px;line-height:2;">
+          <li><a th:href="@{/admin-movie}" style="color:var(--text-secondary);text-decoration:none;"><i class="bi bi-film me-2"></i>电影管理后台</a></li>
+          <li><a th:href="@{/test/seckill}" style="color:var(--text-secondary);text-decoration:none;"><i class="bi bi-lightning me-2"></i>秒杀压测面板</a></li>
         </ul>
       </div>
     </div>

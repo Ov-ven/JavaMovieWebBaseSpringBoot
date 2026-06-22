@@ -103,7 +103,7 @@ public class OrderServiceImpl implements OrderService {
         if (movie.getPrice() == null || movie.getPrice() == 0) {
             throw new BusinessException("该电影为免费影片，无需购买");
         }
-        if (movie.getIsVip() == 1 && user.getIsvip() == 1) {
+        if (movie.getIsVip() == 1 && userService.isVip(userId)) {
             throw new BusinessException("您是VIP用户，可直接观看VIP影片，无需购买");
         }
 

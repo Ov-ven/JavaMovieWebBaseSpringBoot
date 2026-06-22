@@ -10,6 +10,7 @@ import com.software.movie.config.AlipayConfig;
 import com.software.movie.entity.Order;
 import com.software.movie.entity.User;
 import com.software.movie.entity.dto.PaymentRequest;
+import com.software.movie.mapper.OrderMapper;
 import com.software.movie.service.AlipayService;
 import com.software.movie.service.OrderService;
 import com.software.movie.service.UserService;
@@ -37,7 +38,7 @@ public class AlipayServiceImpl implements AlipayService {
     private final AlipayConfig alipayConfig;
     private final OrderService orderService;
     private final UserService userService;
-    private final com.software.movie.mapper.OrderMapper orderMapper;
+    private final OrderMapper orderMapper;
 
     @Autowired
     public AlipayServiceImpl(@Autowired(required = false) AlipayClient alipayClient, AlipayConfig alipayConfig,
