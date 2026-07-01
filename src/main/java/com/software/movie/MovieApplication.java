@@ -12,10 +12,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableCaching
 @EnableScheduling
 @EnableAsync
-public class Test7springbootMybatisPlusBookstoreApplication {
+public class MovieApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(Test7springbootMybatisPlusBookstoreApplication.class, args);
+        SpringApplication.run(MovieApplication.class, args);
     }
 
 }

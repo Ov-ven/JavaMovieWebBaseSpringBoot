@@ -96,7 +96,7 @@ public class MovieServiceImpl extends ServiceImpl<MovieMapper, Movie> implements
      * @param limit 返回数量
      * @return 热门电影列表
      */
-    @Cacheable(cacheNames = "movies", key = "'hot_' + #limit")
+    @Cacheable(cacheNames = "movies", key = "'hot_' + #limit", sync = true)
     @Override
     public List<Movie> getHotMovies(Integer limit) {
         return movieMapper.selectHotMovies(limit);
@@ -108,7 +108,7 @@ public class MovieServiceImpl extends ServiceImpl<MovieMapper, Movie> implements
      * @param limit 返回数量
      * @return 高分电影列表
      */
-    @Cacheable(cacheNames = "movies", key = "'topScore_' + #limit")
+    @Cacheable(cacheNames = "movies", key = "'topScore_' + #limit", sync = true)
     @Override
     public List<Movie> getTopScoreMovies(Integer limit) {
         return movieMapper.selectTopScoreMovies(limit);
@@ -121,7 +121,7 @@ public class MovieServiceImpl extends ServiceImpl<MovieMapper, Movie> implements
      * @return 电影实体，不存在时返回 null
      */
     @Override
-    @Cacheable(cacheNames = "movieDetail", key = "#id")
+    @Cacheable(cacheNames = "movieDetail", key = "#id", sync = true)
     public Movie getMovieDetail(Long id) {
         return movieMapper.selectById(id);
     }
@@ -143,7 +143,7 @@ public class MovieServiceImpl extends ServiceImpl<MovieMapper, Movie> implements
      * @param personId 主创ID
      * @return 电影列表
      */
-    @Cacheable(cacheNames = "movies", key = "'byPerson_' + #personId")
+    @Cacheable(cacheNames = "movies", key = "'byPerson_' + #personId", sync = true)
     @Override
     public List<Movie> getMoviesByPerson(Long personId) {
         return movieMapper.selectMoviesByPersonId(personId);
@@ -173,7 +173,7 @@ public class MovieServiceImpl extends ServiceImpl<MovieMapper, Movie> implements
      * @param limit 返回数量
      * @return 本周热播电影列表
      */
-    @Cacheable(cacheNames = "movies", key = "'weeklyTop_' + #limit")
+    @Cacheable(cacheNames = "movies", key = "'weeklyTop_' + #limit", sync = true)
     @Override
     public List<Movie> getWeeklyTopMovies(Integer limit) {
         // 实际项目中应该基于播放记录计算本周热播
@@ -190,7 +190,7 @@ public class MovieServiceImpl extends ServiceImpl<MovieMapper, Movie> implements
      * @param limit 返回数量
      * @return 最新电影列表
      */
-    @Cacheable(cacheNames = "movies", key = "'newMovies_' + #limit")
+    @Cacheable(cacheNames = "movies", key = "'newMovies_' + #limit", sync = true)
     @Override
     public List<Movie> getNewMovies(Integer limit) {
         // 获取最新上架的电影
@@ -206,7 +206,7 @@ public class MovieServiceImpl extends ServiceImpl<MovieMapper, Movie> implements
      * @param limit 返回数量
      * @return 本月最佳电影列表
      */
-    @Cacheable(cacheNames = "movies", key = "'monthlyTop_' + #limit")
+    @Cacheable(cacheNames = "movies", key = "'monthlyTop_' + #limit", sync = true)
     @Override
     public List<Movie> getMonthlyTopMovies(Integer limit) {
         QueryWrapper<Movie> wrapper = new QueryWrapper<>();
@@ -224,7 +224,7 @@ public class MovieServiceImpl extends ServiceImpl<MovieMapper, Movie> implements
      * @param limit 返回数量
      * @return 历史最佳电影列表
      */
-    @Cacheable(cacheNames = "movies", key = "'allTimeTop_' + #limit")
+    @Cacheable(cacheNames = "movies", key = "'allTimeTop_' + #limit", sync = true)
     @Override
     public List<Movie> getAllTimeTopMovies(Integer limit) {
         QueryWrapper<Movie> wrapper = new QueryWrapper<>();

@@ -1,5 +1,6 @@
 package com.software.movie.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.software.movie.entity.Order;
 import com.software.movie.mapper.OrderMapper;
 import org.slf4j.Logger;
@@ -55,19 +56,28 @@ public class OrderBatchService {
         Map<Long, Integer> stockReturnMap = new HashMap<>();
 
         for (Order order : orders) {
-            // 退回余额（MySQL 操作，事务内执行）
+            // CAS 取消：只有待支付(0)的订单才能取消，避免和支付回调冲突
+            QueryWrapper<Order> casWrapper = new QueryWrapper<>();
+            casWrapper.eq("id", order.getId()).eq("status", 0);
+            Order cancelUpdate = new Order();
+            cancelUpdate.setStatus(2); // 已取消
+            cancelUpdate.setBalancePaid(0.0);
+            int rows = orderMapper.update(cancelUpdate, casWrapper);
+            if (rows == 0) {
+                log.info("订单 {} 已被支付或已取消，跳过", order.getOrderNo());
+                continue; // 已被支付回调抢走，跳过
+            }
+
+            // 退回余额（CAS 成功才退）
             if (order.getBalancePaid() != null && order.getBalancePaid() > 0) {
                 userService.refundBalance(order.getUserId(), order.getBalancePaid());
                 log.info("过期订单 {} 退回余额 ¥{} 给用户 {}", order.getOrderNo(), order.getBalancePaid(), order.getUserId());
-                order.setBalancePaid(0.0);
                 refunded++;
             }
-            // 收集秒杀库存退回信息（不立即操作 Redis）
+            // 收集秒杀库存退回信息（CAS 成功才收集）
             if (order.getOrderType() != null && order.getOrderType() == 3 && order.getMovieId() != null) {
                 stockReturnMap.merge(order.getMovieId(), 1, Integer::sum);
             }
-            order.setStatus(2); // 已取消
-            orderMapper.updateById(order);
             cancelled++;
         }
 

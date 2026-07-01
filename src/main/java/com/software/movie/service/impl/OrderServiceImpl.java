@@ -147,20 +147,24 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public boolean payOrder(String orderNo, Integer payType, String payNo) {
+        // CAS 更新：只有待支付(0)的订单才能改为已支付(1)
+        // 如果定时任务已经改为已取消(2)，这里影响行数为 0，不会冲突
+        QueryWrapper<Order> updateWrapper = new QueryWrapper<>();
+        updateWrapper.eq("order_no", orderNo).eq("status", 0);
+        Order update = new Order();
+        update.setStatus(1);
+        update.setPayType(payType);
+        update.setPayNo(payNo);
+        update.setPayTime(new Date());
+        int rows = orderMapper.update(update, updateWrapper);
+        if (rows == 0) {
+            return false; // 订单已被取消或已支付
+        }
+
+        // 查询更新后的订单（用于后续逻辑）
         QueryWrapper<Order> wrapper = new QueryWrapper<>();
         wrapper.eq("order_no", orderNo);
         Order order = orderMapper.selectOne(wrapper);
-
-        if (order == null || order.getStatus() != 0) {
-            return false;
-        }
-
-        // 1. 更新订单状态为已支付
-        order.setStatus(1);
-        order.setPayType(payType);
-        order.setPayNo(payNo);
-        order.setPayTime(new Date());
-        orderMapper.updateById(order);
 
         // 2. 插入已购凭证（user_movie_entitlement）
         if (order.getMovieId() != null) {
@@ -247,7 +251,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 取消订单（仅待支付状态可取消，退回已扣余额）
+     * 取消订单（仅待支付状态可取消，退回已扣余额）。
+     * <p>使用 CAS 更新避免与支付回调的竞态：只有 status=0 才能改为 status=2。</p>
      */
     @Override
     @Transactional
@@ -259,11 +264,16 @@ public class OrderServiceImpl implements OrderService {
         if (!order.getUserId().equals(userId)) {
             return "操作失败：该订单不属于当前用户";
         }
-        if (order.getStatus() == 1) {
-            return "操作失败：该订单已支付，无法取消";
-        }
-        if (order.getStatus() == 2) {
-            return "操作失败：该订单已取消";
+
+        // CAS 取消：只有待支付(0)才能改为已取消(2)
+        QueryWrapper<Order> casWrapper = new QueryWrapper<>();
+        casWrapper.eq("order_no", orderNo).eq("status", 0);
+        Order cancelUpdate = new Order();
+        cancelUpdate.setStatus(2);
+        cancelUpdate.setBalancePaid(0.0);
+        int rows = orderMapper.update(cancelUpdate, casWrapper);
+        if (rows == 0) {
+            return "操作失败：订单已被支付或已取消";
         }
 
         // 退回已扣余额
@@ -271,10 +281,6 @@ public class OrderServiceImpl implements OrderService {
             userService.refundBalance(userId, order.getBalancePaid());
             log.info("取消订单 {} 退回余额 ¥{} 给用户 {}", orderNo, order.getBalancePaid(), userId);
         }
-
-        order.setStatus(2);
-        order.setBalancePaid(0.0);
-        orderMapper.updateById(order);
 
         return "订单取消成功，订单号：" + orderNo;
     }

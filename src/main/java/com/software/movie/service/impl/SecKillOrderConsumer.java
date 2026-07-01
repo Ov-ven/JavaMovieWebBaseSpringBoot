@@ -1,10 +1,13 @@
 package com.software.movie.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.software.movie.entity.Movie;
 import com.software.movie.entity.Order;
+import com.software.movie.entity.UserMovieEntitlement;
 import com.software.movie.mapper.MovieMapper;
 import com.software.movie.mapper.OrderMapper;
+import com.software.movie.mapper.UserMovieEntitlementMapper;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.slf4j.Logger;
@@ -38,6 +41,9 @@ public class SecKillOrderConsumer implements RocketMQListener<String> {
     @Autowired
     private MovieMapper movieMapper;
 
+    @Autowired
+    private UserMovieEntitlementMapper entitlementMapper;
+
     /**
      * 消费秒杀订单消息，创建待支付订单并落库。
      *
@@ -58,6 +64,22 @@ public class SecKillOrderConsumer implements RocketMQListener<String> {
             return;
         }
 
+        // 幂等校验 1：用户是否已拥有该电影（普通购买/秒杀购买后已支付）
+        QueryWrapper<UserMovieEntitlement> entWrapper = new QueryWrapper<>();
+        entWrapper.eq("user_id", userId).eq("movie_id", movieId);
+        if (entitlementMapper.selectCount(entWrapper) > 0) {
+            log.info("用户已拥有该电影，跳过秒杀: userId={}, movieId={}", userId, movieId);
+            return;
+        }
+
+        // 幂等校验 2：同一用户同一电影的秒杀订单只允许一条
+        QueryWrapper<Order> checkWrapper = new QueryWrapper<>();
+        checkWrapper.eq("user_id", userId).eq("movie_id", movieId).eq("order_type", 3);
+        if (orderMapper.selectCount(checkWrapper) > 0) {
+            log.info("秒杀订单已存在，跳过重复消费: userId={}, movieId={}", userId, movieId);
+            return;
+        }
+
         // 构建秒杀订单并落库（使用秒杀价，没有秒杀价则用原价）
         double price = (movie.getSeckillPrice() != null && movie.getSeckillPrice() > 0)
                 ? movie.getSeckillPrice() : movie.getPrice();
@@ -68,7 +90,12 @@ public class SecKillOrderConsumer implements RocketMQListener<String> {
         order.setAmount(price);
         order.setOrderType(3);   // 秒杀订单
         order.setStatus(0);      // 待支付
-        orderMapper.insert(order);
+        try {
+            orderMapper.insert(order);
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            log.info("秒杀订单重复插入（唯一索引兜底），跳过: userId={}, movieId={}", userId, movieId);
+            return;
+        }
 
         log.info("秒杀订单落库成功：用户 {}，电影 {}，订单号 {}", userId, movieId, order.getOrderNo());
     }
