@@ -79,7 +79,7 @@ interceptor/     LoginInterceptor（Session → UserContext）
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **JavaMovieWebBaseSpringBoot** (2275 symbols, 5214 relationships, 196 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **JavaMovieWebBaseSpringBoot** (2525 symbols, 5632 relationships, 218 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

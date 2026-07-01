@@ -68,7 +68,7 @@ public class MovieServiceImpl extends ServiceImpl<MovieMapper, Movie> implements
         Integer isVip = queryDTO.getIsVip();
         Integer free = queryDTO.getFree();
 
-        if (StringUtils.isNotBlank(type)) wrapper.eq("type", type);
+        if (StringUtils.isNotBlank(type)) wrapper.like("type", type);
         if (StringUtils.isNotBlank(region)) wrapper.eq("region", region);
         if (StringUtils.isNotBlank(keyword)) {
             wrapper.and(w -> w.like("title", keyword).or().like("description", keyword));

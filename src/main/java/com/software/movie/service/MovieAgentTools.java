@@ -79,17 +79,34 @@ public class MovieAgentTools {
 
         IPage<Movie> page = movieService.getMoviePage(queryDTO);
         if (page == null || page.getRecords().isEmpty()) {
+            // 关键词搜索为空时，尝试语义搜索
+            String searchText = isBlank(keyword) ? buildSearchTextFromParams(type, region, sort) : keyword;
+            if (!isBlank(searchText)) {
+                return semanticSearchMovies(searchText);
+            }
             return "未找到符合条件的电影。";
         }
 
-        return page.getRecords().stream()
-                .map(m -> String.format("【%d】%s | 类型：%s | 地区：%s | 评分：%.1f | %s",
-                        m.getId(), m.getTitle(),
-                        m.getType() != null ? m.getType() : "-",
-                        m.getRegion() != null ? m.getRegion() : "-",
-                        m.getScore() != null ? m.getScore() : 0.0,
-                        m.getIsVip() == 1 ? "VIP专享" : "免费"))
-                .collect(Collectors.joining("\n"));
+        return buildMovieCardsData(page.getRecords());
+    }
+
+    /**
+     * 从搜索参数构建语义搜索文本
+     */
+    private String buildSearchTextFromParams(String type, String region, String sort) {
+        StringBuilder sb = new StringBuilder();
+        if (!isBlank(type)) sb.append(type);
+        if (!isBlank(region)) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(region);
+        }
+        if (!isBlank(sort)) {
+            if (sb.length() > 0) sb.append(" ");
+            if ("top".equals(sort)) sb.append("高分");
+            else if ("hot".equals(sort)) sb.append("热门");
+            else if ("new".equals(sort)) sb.append("最新");
+        }
+        return sb.toString();
     }
 
     @Tool("当用户明确表示要购买、下单或支付某部电影时，调用此工具。必须传入电影的ID（movieId）。" +
@@ -316,46 +333,58 @@ public class MovieAgentTools {
             }
 
             // 3. 从匹配结果的自定义 ID 中提取 movieId，查询完整电影信息
-            StringBuilder result = new StringBuilder("为您找到以下匹配电影：\n\n");
-            int index = 1;
-
+            List<Movie> movies = new java.util.ArrayList<>();
             for (EmbeddingMatch<TextSegment> match : matches) {
-                // 自定义 ID 就是 movieId（在 ingestAllMoviesToVectorStore 中设置）
                 String movieIdStr = match.embeddingId();
                 if (movieIdStr == null || movieIdStr.isEmpty()) continue;
-
-                Long movieId;
                 try {
-                    movieId = Long.parseLong(movieIdStr);
+                    Long movieId = Long.parseLong(movieIdStr);
+                    Movie movie = movieService.getById(movieId);
+                    if (movie != null) movies.add(movie);
                 } catch (NumberFormatException e) {
                     continue;
                 }
-
-                Movie movie = movieService.getById(movieId);
-                if (movie == null) continue;
-
-                result.append(String.format("**%d. %s**\n", index++, movie.getTitle()));
-                result.append(String.format("类型：%s | 地区：%s | 评分：%.1f\n",
-                        movie.getType() != null ? movie.getType() : "-",
-                        movie.getRegion() != null ? movie.getRegion() : "-",
-                        movie.getScore() != null ? movie.getScore() : 0.0));
-                if (movie.getIsVip() == 1) {
-                    result.append("⭐ VIP专享\n");
-                }
-                if (movie.getDescription() != null && !movie.getDescription().isEmpty()) {
-                    String desc = movie.getDescription().length() > 80
-                            ? movie.getDescription().substring(0, 80) + "..."
-                            : movie.getDescription();
-                    result.append(desc).append("\n");
-                }
-                result.append("\n");
             }
 
-            return result.toString().trim();
+            if (movies.isEmpty()) {
+                return "暂未找到与您需求匹配的电影，试试换个描述方式？";
+            }
+
+            return buildMovieCardsData(movies);
 
         } catch (Exception e) {
             return "语义搜索失败：" + e.getMessage();
         }
+    }
+
+    /**
+     * 构建电影卡片数据（JSON格式，前端渲染）
+     */
+    private String buildMovieCardsData(List<Movie> movies) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("__MOVIE_CARDS__");
+        sb.append("[");
+        for (int i = 0; i < movies.size(); i++) {
+            Movie m = movies.get(i);
+            if (i > 0) sb.append(",");
+            sb.append("{");
+            sb.append("\"id\":").append(m.getId()).append(",");
+            sb.append("\"title\":\"").append(escapeJson(m.getTitle())).append("\",");
+            sb.append("\"cover\":\"").append(m.getCover() != null ? escapeJson(m.getCover()) : "").append("\",");
+            sb.append("\"type\":\"").append(m.getType() != null ? escapeJson(m.getType()) : "-").append("\",");
+            sb.append("\"region\":\"").append(m.getRegion() != null ? escapeJson(m.getRegion()) : "-").append("\",");
+            sb.append("\"score\":").append(m.getScore() != null ? m.getScore() : 0.0).append(",");
+            sb.append("\"isVip\":").append(m.getIsVip());
+            sb.append("}");
+        }
+        sb.append("]");
+        sb.append("__END__");
+        return sb.toString();
+    }
+
+    private String escapeJson(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
     }
 
     private boolean isBlank(String s) {

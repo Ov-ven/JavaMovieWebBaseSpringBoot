@@ -135,9 +135,20 @@
 		</div>
 		<div class="filter-bar">
 			<div class="filter-pills">
-				<a th:href="@{/(sort='new')}" th:classappend="${querySort == 'new'} ? 'active' : ''" class="pill">最新</a>
-				<a th:href="@{/(sort='hot')}" th:classappend="${querySort == 'hot'} ? 'active' : ''" class="pill">最热</a>
-				<a th:href="@{/(sort='top')}" th:classappend="${querySort == 'top'} ? 'active' : ''" class="pill">评分最高</a>
+				<a th:href="@{/(sort='new', type=${queryType})}" th:classappend="${querySort == 'new' || querySort == null} ? 'active' : ''" class="pill">最新</a>
+				<a th:href="@{/(sort='hot', type=${queryType})}" th:classappend="${querySort == 'hot'} ? 'active' : ''" class="pill">最热</a>
+				<a th:href="@{/(sort='top', type=${queryType})}" th:classappend="${querySort == 'top'} ? 'active' : ''" class="pill">评分最高</a>
+			</div>
+			<div class="filter-pills">
+				<a th:href="@{/(sort=${querySort})}" th:classappend="${queryType == null || queryType == ''} ? 'active' : ''" class="pill">全部</a>
+				<a th:href="@{/(type='科幻', sort=${querySort})}" th:classappend="${queryType == '科幻'} ? 'active' : ''" class="pill">科幻</a>
+				<a th:href="@{/(type='动作', sort=${querySort})}" th:classappend="${queryType == '动作'} ? 'active' : ''" class="pill">动作</a>
+				<a th:href="@{/(type='喜剧', sort=${querySort})}" th:classappend="${queryType == '喜剧'} ? 'active' : ''" class="pill">喜剧</a>
+				<a th:href="@{/(type='剧情', sort=${querySort})}" th:classappend="${queryType == '剧情'} ? 'active' : ''" class="pill">剧情</a>
+				<a th:href="@{/(type='动画', sort=${querySort})}" th:classappend="${queryType == '动画'} ? 'active' : ''" class="pill">动画</a>
+				<a th:href="@{/(type='爱情', sort=${querySort})}" th:classappend="${queryType == '爱情'} ? 'active' : ''" class="pill">爱情</a>
+				<a th:href="@{/(type='犯罪', sort=${querySort})}" th:classappend="${queryType == '犯罪'} ? 'active' : ''" class="pill">犯罪</a>
+				<a th:href="@{/(type='冒险', sort=${querySort})}" th:classappend="${queryType == '冒险'} ? 'active' : ''" class="pill">冒险</a>
 			</div>
 		</div>
 

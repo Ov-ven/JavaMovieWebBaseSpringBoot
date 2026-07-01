@@ -688,7 +688,13 @@
       let fullText = "";
       let buffer = "";
 
-      if (window.marked) marked.setOptions({ breaks: true });
+      if (window.marked) {
+        marked.setOptions({ breaks: true });
+        // 自定义renderer允许HTML标签渲染
+        const renderer = new marked.Renderer();
+        renderer.html = function(html) { return html; };
+        marked.setOptions({ breaks: true, renderer: renderer });
+      }
 
       const bubble = aiDiv.querySelector('.bubble');
 
@@ -723,10 +729,29 @@
         }
       }
 
-      // 流结束后：用 marked 重新渲染完整 Markdown
+      // 流结束后：处理内容
       if (fullText.trim()) {
-        if (window.marked) {
+        // 检测电影卡片标记（更宽松的匹配，处理流式传输截断）
+        const cardsRegex = /(?:__MOVIE_CARDS__|CARDS__|\[__)\s*(\[.*?\])\s*__END__/s;
+        const cardsMatch = fullText.match(cardsRegex);
+        if (cardsMatch) {
+          try {
+            const movies = JSON.parse(cardsMatch[1]);
+            const prefix = fullText.substring(0, cardsMatch.index).trim();
+            const suffix = fullText.substring(cardsMatch.index + cardsMatch[0].length).trim();
+            let html = '';
+            if (prefix) html += '<p>' + escapeHtml(prefix) + '</p>';
+            html += renderMovieCards(movies);
+            if (suffix) html += '<p>' + escapeHtml(suffix) + '</p>';
+            bubble.innerHTML = html;
+          } catch (e) {
+            console.error('解析电影卡片失败:', e);
+            bubble.innerHTML = marked.parse(fullText);
+          }
+        } else if (window.marked) {
           bubble.innerHTML = marked.parse(fullText);
+        } else {
+          bubble.innerHTML = fullText;
         }
         // 完成闪烁
         if (typeof gsap !== 'undefined') {
@@ -757,6 +782,29 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // 渲染电影卡片
+  function renderMovieCards(movies) {
+    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin:16px 0;">';
+    movies.forEach(m => {
+      html += '<a href="/detail/' + m.id + '" target="_blank" style="text-decoration:none;color:inherit;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;transition:all 0.2s;cursor:pointer;background:#fff;" onmouseover="this.style.boxShadow=\'0 6px 16px rgba(0,0,0,0.15)\';this.style.transform=\'translateY(-3px)\'" onmouseout="this.style.boxShadow=\'none\';this.style.transform=\'none\'">';
+      if (m.cover) {
+        html += '<img src="/image/' + m.cover + '" style="width:100%;height:160px;object-fit:cover;" alt="' + escapeHtml(m.title) + '"/>';
+      } else {
+        html += '<div style="width:100%;height:160px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#999;">暂无海报</div>';
+      }
+      html += '<div style="padding:10px 12px;">';
+      html += '<div style="font-weight:600;font-size:15px;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(m.title) + '</div>';
+      html += '<div style="font-size:13px;color:#666;margin-bottom:6px;">' + escapeHtml(m.type) + ' · ' + escapeHtml(m.region) + '</div>';
+      html += '<div style="font-size:13px;"><span style="color:#ff9800;">★ ' + (m.score || 0).toFixed(1) + '</span>';
+      if (m.isVip === 1) {
+        html += ' <span style="color:#c0392b;">VIP</span>';
+      }
+      html += '</div></div></a>';
+    });
+    html += '</div>';
+    return html;
   }
 
   // 回车发送
