@@ -51,6 +51,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/user/checkUsername", // 用户名校验
                         "/api/movie/**",        // 电影浏览相关接口
                         "/api/comment/list",    // 评论列表（公开浏览）
+                        "/api/chat/init-vector", // 电影向量化初始化
+                        "/api/chat/init-faq-vector", // FAQ向量化初始化
 
                         // ==================== 外部回调 ====================
                         "/payment/notify",      // 支付宝异步通知回调

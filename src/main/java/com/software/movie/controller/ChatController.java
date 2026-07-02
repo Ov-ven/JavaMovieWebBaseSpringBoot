@@ -46,6 +46,12 @@ public class ChatController {
     private FavoriteService favoriteService;
 
     @Autowired
+    private FaqService faqService;
+
+    @Autowired
+    private FaqVectorIngestionService faqVectorIngestionService;
+
+    @Autowired
     private MovieVectorIngestionService ingestionService;
 
     @Autowired(required = false)
@@ -160,11 +166,22 @@ public class ChatController {
     }
 
     /**
+     * 手动触发FAQ数据向量化（一次性洗刷）。
+     * <p>访问 http://localhost:8080/api/chat/init-faq-vector 即可执行。</p>
+     */
+    @GetMapping("/init-faq-vector")
+    @ResponseBody
+    public String initFaqVector() {
+        int count = faqVectorIngestionService.ingestAllFaqToVectorStore();
+        return "FAQ向量化数据洗刷完成！共摄入 " + count + " 条FAQ。";
+    }
+
+    /**
      * 为当前用户构建专属 MovieAssistant 实例。
      * <p>每次请求独立创建，userId 通过构造函数注入工具集，无 ThreadLocal 依赖。</p>
      */
     private MovieAssistant buildAssistant(Long userId) {
-        MovieAgentTools userTools = new MovieAgentTools(userId, movieService, orderService, userService, favoriteService, embeddingModel, embeddingStore);
+        MovieAgentTools userTools = new MovieAgentTools(userId, movieService, orderService, userService, favoriteService, faqService, faqVectorIngestionService, embeddingModel, embeddingStore);
         return AiServices.builder(MovieAssistant.class)
                 .streamingChatLanguageModel(streamingChatModel)
                 .chatMemoryProvider(chatMemoryProvider)

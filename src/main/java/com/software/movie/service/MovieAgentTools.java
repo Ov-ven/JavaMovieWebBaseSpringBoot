@@ -1,6 +1,7 @@
 package com.software.movie.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.software.movie.entity.Faq;
 import com.software.movie.entity.Movie;
 import com.software.movie.entity.Order;
 import com.software.movie.entity.User;
@@ -16,6 +17,7 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,23 +32,29 @@ public class MovieAgentTools {
     private final OrderService orderService;
     private final UserService userService;
     private final FavoriteService favoriteService;
+    private final FaqService faqService;
+    private final FaqVectorIngestionService faqVectorIngestionService;
     private final EmbeddingModel embeddingModel;
     private final EmbeddingStore<TextSegment> embeddingStore;
 
     /**
      * 全参构造函数，由 Controller 在每次请求时动态装配。
      *
-     * @param userId          当前登录用户ID
-     * @param movieService    电影服务
-     * @param orderService    订单服务
-     * @param userService     用户服务
-     * @param favoriteService 收藏服务
-     * @param embeddingModel  文本向量化模型
-     * @param embeddingStore  向量存储
+     * @param userId                    当前登录用户ID
+     * @param movieService              电影服务
+     * @param orderService              订单服务
+     * @param userService               用户服务
+     * @param favoriteService           收藏服务
+     * @param faqService                FAQ服务
+     * @param faqVectorIngestionService FAQ向量化服务
+     * @param embeddingModel            文本向量化模型
+     * @param embeddingStore            向量存储
      */
     public MovieAgentTools(Long userId, MovieService movieService,
                            OrderService orderService, UserService userService,
                            FavoriteService favoriteService,
+                           FaqService faqService,
+                           FaqVectorIngestionService faqVectorIngestionService,
                            EmbeddingModel embeddingModel,
                            EmbeddingStore<TextSegment> embeddingStore) {
         this.userId = userId;
@@ -54,6 +62,8 @@ public class MovieAgentTools {
         this.orderService = orderService;
         this.userService = userService;
         this.favoriteService = favoriteService;
+        this.faqService = faqService;
+        this.faqVectorIngestionService = faqVectorIngestionService;
         this.embeddingModel = embeddingModel;
         this.embeddingStore = embeddingStore;
     }
@@ -356,6 +366,60 @@ public class MovieAgentTools {
             return "语义搜索失败：" + e.getMessage();
         }
     }
+
+    /**
+     * 搜索FAQ知识库（向量语义匹配）。
+     * <p>当用户询问平台使用问题、功能说明、操作指南等非电影内容时，调用此工具。</p>
+     *
+     * @param question 用户问题
+     * @return 匹配的FAQ答案
+     */
+    @Tool("当用户询问平台使用问题、功能说明、操作指南、账号问题、支付问题、VIP问题、订单问题等非电影内容时，调用此工具。" +
+          "例如：怎么退款、如何注册、VIP有什么权益、怎么取消订单等。")
+    public String searchFaq(
+            @P("用户的问题，如：怎么退款、如何注册、VIP有什么权益") String question) {
+
+        if (isBlank(question)) {
+            return "请描述您的问题，我会在FAQ知识库中为您查找答案。";
+        }
+
+        try {
+            // 1. 先用关键词快速匹配
+            List<Faq> keywordResults = faqService.searchByKeyword(question, 3);
+            if (!keywordResults.isEmpty()) {
+                return formatFaqResults(keywordResults);
+            }
+
+            // 2. 关键词未命中，用向量语义搜索
+            List<Faq> vectorResults = faqVectorIngestionService.searchSimilarFaq(question, 3);
+            if (!vectorResults.isEmpty()) {
+                return formatFaqResults(vectorResults);
+            }
+
+            // 3. 都未找到
+            return "抱歉，没有找到与您问题相关的FAQ。您可以尝试换个问法，或者联系客服获取帮助。";
+
+        } catch (Exception e) {
+            log.error("FAQ搜索失败", e);
+            return "FAQ搜索遇到问题，请稍后重试。";
+        }
+    }
+
+    /**
+     * 格式化FAQ搜索结果
+     */
+    private String formatFaqResults(List<Faq> faqList) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("为您找到以下相关问题：\n\n");
+        for (int i = 0; i < faqList.size(); i++) {
+            Faq faq = faqList.get(i);
+            sb.append("**").append(i + 1).append(". ").append(faq.getQuestion()).append("**\n");
+            sb.append(faq.getAnswer()).append("\n\n");
+        }
+        return sb.toString().trim();
+    }
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MovieAgentTools.class);
 
     /**
      * 构建电影卡片数据（JSON格式，前端渲染）

@@ -223,6 +223,14 @@
                 </el-input>
                 <el-button type="primary" plain @click="loadMovies">搜索</el-button>
                 <el-button plain @click="resetSearch">重置</el-button>
+                <div style="margin-left: auto; display: flex; gap: 8px;">
+                    <el-button type="warning" plain icon="el-icon-refresh" @click="initMovieVector" :loading="movieVectorLoading">
+                        初始化电影向量
+                    </el-button>
+                    <el-button type="success" plain icon="el-icon-refresh" @click="initFaqVector" :loading="faqVectorLoading">
+                        初始化FAQ向量
+                    </el-button>
+                </div>
             </div>
 
             <!-- 数据表格 -->
@@ -430,6 +438,8 @@
                     seckillDialogVisible: false,
                     seckillSubmitting: false,
                     seckillForm: { movieId: null, title: '', price: 0, seckillPrice: null, seckillStock: null },
+                    movieVectorLoading: false,
+                    faqVectorLoading: false,
                     form: {
                         id: null,
                         title: '',
@@ -626,6 +636,34 @@
                         this.$message.error('网络错误: ' + e.message);
                     } finally {
                         this.seckillSubmitting = false;
+                    }
+                },
+
+                // ========== 初始化电影向量 ==========
+                async initMovieVector() {
+                    this.movieVectorLoading = true;
+                    try {
+                        const res = await fetch('/api/chat/init-vector');
+                        const data = await res.text();
+                        this.$message.success(data);
+                    } catch (e) {
+                        this.$message.error('初始化失败: ' + e.message);
+                    } finally {
+                        this.movieVectorLoading = false;
+                    }
+                },
+
+                // ========== 初始化FAQ向量 ==========
+                async initFaqVector() {
+                    this.faqVectorLoading = true;
+                    try {
+                        const res = await fetch('/api/chat/init-faq-vector');
+                        const data = await res.text();
+                        this.$message.success(data);
+                    } catch (e) {
+                        this.$message.error('初始化失败: ' + e.message);
+                    } finally {
+                        this.faqVectorLoading = false;
                     }
                 }
             }
